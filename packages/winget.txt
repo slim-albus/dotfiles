@@ -1,0 +1,13 @@
+# Winget package IDs.
+Git.Git
+cURL.cURL
+GNU.Wget2
+7zip.7zip
+BurntSushi.ripgrep.MSVC
+jqlang.jq
+eza-community.eza
+Starship.Starship
+sharkdp.fd
+junegunn.fzf
+zyedidia.micro
+aristocratos.btop4win

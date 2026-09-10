@@ -1,0 +1,15 @@
+# Packages installed with apt.
+git
+curl
+wget
+unzip
+tmux
+ripgrep
+jq
+eza
+starship
+fd-find
+fzf
+micro
+btop
+htop
