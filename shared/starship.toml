@@ -1,0 +1,131 @@
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# A compact context line followed by the tools detected in the current project.
+format = """
+$username$hostname$directory$git_branch$git_status\
+$line_break\
+$package$python$nodejs$rust$golang$java$gradle$docker_context\
+$line_break\
+$os$character"""
+
+add_newline = false
+scan_timeout = 30
+command_timeout = 500
+
+# Identity and location
+[username]
+show_always = true
+style_user = "bold green"
+format = "[$user]($style)"
+
+[hostname]
+ssh_only = false
+style = "bold green"
+format = "@[$hostname]($style) "
+ssh_symbol = " "
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+read_only = " 󰌾"
+
+# Git context
+[git_branch]
+symbol = " "
+style = "bold purple"
+
+[git_status]
+style = "bold yellow"
+ahead = "⇡${count}"
+behind = "⇣${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+staged = '[+($count)](green)'
+modified = '[!($count)](yellow)'
+untracked = '[?($count)](red)'
+
+# Runtime and project context
+[package]
+symbol = "󰏗 "
+format = "is [${symbol}$version]($style)"
+
+[python]
+symbol = " "
+format = "via [${symbol}Python ($version )]($style)"
+
+[nodejs]
+symbol = " "
+format = "via [${symbol}Node.js ($version )]($style)"
+
+[rust]
+symbol = "󱘗 "
+format = "via [${symbol}Rust ($version )]($style)"
+
+[golang]
+symbol = " "
+format = "via [${symbol}Go ($version )]($style)"
+
+[java]
+symbol = " "
+style = "red bold"
+format = "via [${symbol}Java ($version )]($style)"
+detect_files = ["pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts"]
+
+[gradle]
+symbol = " "
+format = "with [${symbol}Gradle ($version )]($style)"
+
+[docker_context]
+symbol = " "
+format = "on [${symbol}Docker $context]($style)"
+
+# Prompt controls
+[cmd_duration]
+min_time = 2_000
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+[status]
+disabled = false
+symbol = " "
+format = "[$symbol$common_meaning$signal_name$exit_code]($style) "
+map_symbol = true
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold yellow)"
+
+[os]
+disabled = false
+style = "bold blue"
+
+[os.symbols]
+Arch = " "
+Debian = " "
+Fedora = " "
+Linux = " "
+Macos = " "
+Manjaro = " "
+Mint = " "
+NixOS = " "
+OpenBSD = "󰈺 "
+Raspbian = " "
+Ubuntu = " "
+Unknown = " "
+Windows = "󰍲 "
+
+# Framework and CSS hints
+[custom.nextjs]
+description = "Show Next.js when a project config is present"
+symbol = " "
+detect_files = ["next.config.js", "next.config.ts", "next.config.mjs"]
+format = "[$symbolNext.js]($style) "
+style = "bold white"
+
+[custom.tailwind]
+description = "Show Tailwind when a project config is present"
+detect_files = ["tailwind.config.js", "tailwind.config.ts", "postcss.config.mjs"]
+symbol = " "
+format = "[$symbolTailwind]($style)"
+style = "bold blue"

@@ -4,6 +4,8 @@
 .env
 *.key
 *.pem
+*.log
+.env.*
 
 # OS junk
 .DS_Store
@@ -16,6 +18,15 @@ desktop.ini
 *.swo
 .idea/
 .vscode/
+
+# Build and dependency output
+node_modules/
+dist/
+build/
+coverage/
+__pycache__/
+.pytest_cache/
+.cache/
 
 # PowerShell / shell backups
 *.bak

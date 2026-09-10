@@ -1,0 +1,10 @@
+# Main Bash entry point for the dotfiles repository.
+
+DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+
+source "$DOTFILES_ROOT/linux/env.sh"
+source "$DOTFILES_ROOT/linux/aliases.sh"
+source "$DOTFILES_ROOT/linux/functions.sh"
+source "$DOTFILES_ROOT/linux/prompt.sh"
+
+unset DOTFILES_ROOT

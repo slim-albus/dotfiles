@@ -1,0 +1,30 @@
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors and tooling
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment and secrets
+.env
+.env.*
+*.local
+*.secret
+*.key
+*.pem
+
+# Build and test output
+node_modules/
+dist/
+build/
+coverage/
+.pytest_cache/
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+.cache/

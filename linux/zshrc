@@ -1,0 +1,8 @@
+# Keep interactive Zsh sessions aligned with the Bash configuration.
+
+DOTFILES_ROOT="$(cd -- "$(dirname -- "${(%):-%N}")/.." && pwd)"
+source "$DOTFILES_ROOT/linux/env.sh"
+source "$DOTFILES_ROOT/linux/aliases.sh"
+source "$DOTFILES_ROOT/linux/functions.sh"
+source "$DOTFILES_ROOT/linux/prompt.sh"
+unset DOTFILES_ROOT
