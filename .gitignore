@@ -1,0 +1,21 @@
+# Secrets & local overrides
+*.local
+*.secret
+.env
+*.key
+*.pem
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+*~
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# PowerShell / shell backups
+*.bak
