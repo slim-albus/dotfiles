@@ -99,6 +99,7 @@ Reload a Unix shell with `reload`. Reload PowerShell with `reload` as well.
 | `project_root` | Print the Git root, or the current directory outside Git |
 | `croot` | Change to the current Git repository root |
 | `l`, `la`, `ll` | Directory listings, including hidden files for `la` and `ll` |
+| `cls` | Clear the terminal screen |
 | `bigfiles [DIR] [N]` | Show the largest entries; defaults to 20 |
 | `path` | Print PATH entries one per line |
 | `extract ARCHIVE` | Extract tar, zip, gzip, bzip2, and xz archives |
