@@ -85,3 +85,51 @@ function venv {
 function Show-Path {
     $env:Path -split [IO.Path]::PathSeparator
 }
+
+function Edit-Profile {
+    & $env:EDITOR $PROFILE.CurrentUserAllHosts
+}
+Set-Alias ep Edit-Profile
+
+function Find-File {
+    param([Parameter(Mandatory)][string]$Name, [string]$Path = ".")
+    Get-ChildItem -Path $Path -Recurse -File -Filter "*$Name*" -ErrorAction SilentlyContinue |
+        Select-Object -ExpandProperty FullName
+}
+Set-Alias ff Find-File
+
+function head {
+    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10)
+    Get-Content -Path $Path -Head $Lines
+}
+
+function tail {
+    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10, [switch]$Follow)
+    Get-Content -Path $Path -Tail $Lines -Wait:$Follow
+}
+
+function uptime {
+    if (Get-Command Get-Uptime -ErrorAction SilentlyContinue) {
+        Get-Uptime
+    } else {
+        (Get-Date) - (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+    }
+}
+
+function cpy { Set-Clipboard ($args -join ' ') }
+function pst { Get-Clipboard }
+
+function Show-ProfileHelp {
+    @'
+PowerShell profile commands:
+  ep                 Edit the current PowerShell profile
+  reload             Reload the profile
+  ff NAME [PATH]     Find files recursively by name
+  head FILE [N]      Show the first N lines
+  tail FILE [N]      Show the last N lines
+  uptime             Show system uptime
+  cpy TEXT           Copy text to the clipboard
+  pst                Read clipboard text
+'@ | Write-Host
+}
+Set-Alias profile-help Show-ProfileHelp

@@ -106,6 +106,9 @@ Reload a Unix shell with `reload`. Reload PowerShell with `reload` as well.
 
 PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
 
+PowerShell also provides `ep`/`Edit-Profile`, `ff`/`Find-File`, `head`,
+`tail`, `uptime`, `cpy`, `pst`, and `profile-help`.
+
 ### Local development
 
 | Command | Purpose |
@@ -119,6 +122,10 @@ PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
 
 `serve` and `venv` require Python. Linux `json` requires `jq`; Linux port
 helpers use `ss`, `lsof`, or `fuser` depending on what is installed.
+
+PowerShell history keeps up to 10,000 entries, removes duplicates, supports
+history search with the arrow keys, uses menu completion on Tab, and excludes
+commands containing common secret names from history.
 
 ### Git shortcuts
 
@@ -180,7 +187,7 @@ installed, the shell continues without a custom prompt.
 - Pruned remote-tracking branches on fetch.
 - Recorded conflict resolution with `rerere`.
 - `zdiff3` conflict markers and histogram diffs.
-- VS Code as the commit editor.
+- micro as the commit editor.
 - The shared global ignore file.
 
 `shared/git/ignore` covers editor files, secrets, operating-system files,
