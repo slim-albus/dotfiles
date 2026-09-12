@@ -17,3 +17,6 @@
 [core]
     editor = micro
     excludesFile = ~/.config/git/ignore
+[user]
+	name = Slim_Albus
+	email = 122900291+slim-albus@users.noreply.github.com
