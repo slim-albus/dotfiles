@@ -26,7 +26,8 @@ Read the complete feature and configuration reference in
 [docs/usage.md](docs/usage.md).
 
 The default terminal editor is `micro`. Docker shortcuts, monitoring tools,
-and all shell commands are listed in the full reference.
+directory tree helpers, monitoring tools, and all shell commands are listed in
+the full reference.
 
 ## Structure
 

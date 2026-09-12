@@ -3,6 +3,7 @@ git
 curl
 wget
 unzip
+tree
 tmux
 ripgrep
 jq

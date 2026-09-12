@@ -114,6 +114,25 @@ bigfiles() {
     du -ah -- "$directory" 2>/dev/null | sort -hr | head -n "$count"
 }
 
+treeview() {
+    local directory="${1:-.}"
+    local output_file="${2:-}"
+    command -v tree >/dev/null 2>&1 || {
+        printf 'tree is required for treeview.\n' >&2
+        return 1
+    }
+    [[ -d "$directory" ]] || {
+        printf 'Not a directory: %s\n' "$directory" >&2
+        return 1
+    }
+
+    if [[ -n "$output_file" ]]; then
+        tree -a --dirsfirst -- "$directory" >"$output_file"
+    else
+        tree -a --dirsfirst -- "$directory"
+    fi
+}
+
 path() {
     printf '%s\n' "$PATH" | tr ':' '\n'
 }

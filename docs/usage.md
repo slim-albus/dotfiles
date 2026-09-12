@@ -101,6 +101,8 @@ Reload a Unix shell with `reload`. Reload PowerShell with `reload` as well.
 | `l`, `la`, `ll` | Directory listings, including hidden files for `la` and `ll` |
 | `cls` | Clear the terminal screen |
 | `bigfiles [DIR] [N]` | Show the largest entries; defaults to 20 |
+| `treeview [DIR] [FILE]` | Print a directory tree or save it to a text file |
+| `Show-Tree [PATH] [OUTPUT_FILE]` | Print a directory tree or save it to a text file |
 | `path` | Print PATH entries one per line |
 | `extract ARCHIVE` | Extract tar, zip, gzip, bzip2, and xz archives |
 
@@ -108,6 +110,25 @@ PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
 
 PowerShell also provides `ep`/`Edit-Profile`, `ff`/`Find-File`, `head`,
 `tail`, `uptime`, `cpy`, `pst`, and `profile-help`.
+
+#### Directory trees
+
+Use `treeview` on Linux and WSL, or `Show-Tree` in PowerShell. Both commands
+include hidden entries, place directories before files, and use indentation to
+show nesting. Omit the output file to print the tree in the terminal:
+
+```bash
+treeview [DIR]
+treeview [DIR] tree.txt
+```
+
+```powershell
+Show-Tree -Path [PATH]
+Show-Tree -Path [PATH] -OutputFile tree.txt
+```
+
+The Linux helper requires the `tree` package, which the Linux package manifests
+install automatically.
 
 ### Local development
 

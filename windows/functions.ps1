@@ -38,6 +38,40 @@ function Get-BigFiles {
         Select-Object -First $Top FullName, @{n='MB';e={ [math]::Round($_.Length/1MB,2) }}
 }
 
+function Show-Tree {
+    param([string]$Path = ".", [string]$OutputFile)
+    $root = Get-Item -LiteralPath $Path -ErrorAction SilentlyContinue
+    if (-not $root -or -not $root.PSIsContainer) {
+        Write-Error "Not a directory: $Path"
+        return
+    }
+
+    $lines = [System.Collections.Generic.List[string]]::new()
+    $lines.Add($root.Name)
+    $walk = {
+        param([string]$CurrentPath, [string]$Prefix)
+        $children = @(Get-ChildItem -LiteralPath $CurrentPath -Force -ErrorAction SilentlyContinue |
+            Sort-Object @{Expression={ -not $_.PSIsContainer }}, Name)
+        for ($index = 0; $index -lt $children.Count; $index++) {
+            $child = $children[$index]
+            $isLast = $index -eq ($children.Count - 1)
+            $branch = if ($isLast) { '\-- ' } else { '|-- ' }
+            $lines.Add("$Prefix$branch$($child.Name)")
+            if ($child.PSIsContainer) {
+                $nextPrefix = if ($isLast) { "$Prefix    " } else { "$Prefix|   " }
+                & $walk $child.FullName $nextPrefix
+            }
+        }
+    }
+    & $walk $root.FullName ""
+
+    if ($OutputFile) {
+        $lines | Set-Content -LiteralPath $OutputFile
+    } else {
+        $lines
+    }
+}
+
 function killport {
     param([Parameter(Mandatory)][int]$Port)
     $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
@@ -125,6 +159,7 @@ PowerShell profile commands:
   ep                 Edit the current PowerShell profile
   reload             Reload the profile
   ff NAME [PATH]     Find files recursively by name
+    Show-Tree [PATH] [OUTPUT_FILE]
   head FILE [N]      Show the first N lines
   tail FILE [N]      Show the last N lines
   uptime             Show system uptime
