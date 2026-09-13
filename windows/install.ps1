@@ -1,9 +1,13 @@
 [CmdletBinding()]
 param(
-    [switch]$DryRun
+    [switch]$DryRun,
+    [string]$LogFile
 )
 
 $ErrorActionPreference = 'Stop'
+if ($LogFile) {
+    Start-Transcript -Path $LogFile -Append | Out-Null
+}
 $DotfilesRoot = Split-Path -Parent $PSScriptRoot
 $ProfilePath = $PROFILE.CurrentUserAllHosts
 $SourceLine = ". `"$DotfilesRoot\windows\Microsoft.PowerShell_profile.ps1`""
@@ -38,3 +42,6 @@ if (Get-Command git -ErrorAction SilentlyContinue) {
 }
 
 Write-Host "PowerShell dotfiles installed from $DotfilesRoot"
+if ($LogFile) {
+    Stop-Transcript | Out-Null
+}

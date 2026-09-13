@@ -6,6 +6,14 @@ source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
 
+if command -v direnv >/dev/null 2>&1; then
+	eval "$(direnv hook bash)"
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+	eval "$(zoxide init bash)"
+fi
+
 # Use the distribution-provided Bash completion definitions when available.
 if [[ -r /usr/share/bash-completion/bash_completion ]]; then
 	source /usr/share/bash-completion/bash_completion
@@ -14,5 +22,3 @@ elif [[ -r /etc/bash_completion ]]; then
 fi
 
 source "$DOTFILES_ROOT/linux/prompt.sh"
-
-unset DOTFILES_ROOT

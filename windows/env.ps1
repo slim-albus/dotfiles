@@ -26,4 +26,12 @@ Add-ToPath "$HOME\go\bin"
 Add-ToPath "$HOME\scoop\shims"
 Add-ToPath "$env:USERPROFILE\bin"
 
+if (Get-Command zoxide -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { zoxide init powershell | Out-String })
+}
+
+if (Get-Command direnv -ErrorAction SilentlyContinue) {
+    Invoke-Expression (& { direnv hook pwsh | Out-String })
+}
+
 Remove-Item Function:\Add-ToPath  # keep global namespace clean

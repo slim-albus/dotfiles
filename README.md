@@ -21,6 +21,8 @@ Windows PowerShell:
 
 Use `--dry-run` or `-DryRun` to preview changes. Package lists live in
 `packages/`; edit the file for your package manager before installing.
+Use `./install-packages.sh --minimal` for the essential shell baseline, or
+`--log FILE` to capture installer output.
 
 Read the complete feature and configuration reference in
 [docs/usage.md](docs/usage.md).

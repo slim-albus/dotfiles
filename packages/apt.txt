@@ -16,3 +16,11 @@ btop
 htop
 zsh
 bash-completion
+yazi
+zoxide
+bat
+git-delta
+direnv
+p7zip-full
+unrar
+zstd

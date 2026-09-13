@@ -3,10 +3,11 @@ set -euo pipefail
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 DRY_RUN=0
+LOG_FILE=''
 
 usage() {
     cat <<'EOF'
-Usage: ./install.sh [--dry-run]
+Usage: ./install.sh [--dry-run] [--log FILE]
 
 Verify Git, then install the shared and shell configuration for the current
 user.
@@ -124,11 +125,21 @@ ensure_source_line() {
 while (($#)); do
     case "$1" in
         --dry-run) DRY_RUN=1 ;;
+        --log)
+            (($# > 1)) || { printf '%s requires a file path.\n' "$1" >&2; exit 2; }
+            LOG_FILE="$2"
+            shift
+            ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
     shift
 done
+
+if [[ -n "$LOG_FILE" ]]; then
+    mkdir -p -- "$(dirname -- "$LOG_FILE")"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
 
 # The Unix installer is intentionally separate from the Windows installer.
 if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* ]]; then

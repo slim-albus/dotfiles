@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param(
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Minimal,
+    [string]$LogFile
 )
 
 $ErrorActionPreference = 'Stop'
@@ -17,6 +19,14 @@ $packages = Get-Content $packageFile |
 
 if (-not $packages) {
     throw "Package list is empty: $packageFile"
+}
+
+if ($Minimal) {
+    $packages = $packages | Where-Object { $_ -in @('Git.Git', 'zyedidia.micro') }
+}
+
+if ($LogFile) {
+    Start-Transcript -Path $LogFile -Append | Out-Null
 }
 
 if (-not $DryRun -and -not (Get-Command winget -ErrorAction SilentlyContinue)) {
@@ -47,3 +57,6 @@ foreach ($package in $packages) {
 }
 
 Write-Host 'Packages installed with winget.'
+if ($LogFile) {
+    Stop-Transcript | Out-Null
+}

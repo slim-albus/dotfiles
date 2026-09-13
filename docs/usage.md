@@ -14,6 +14,7 @@ individually and skipped if unavailable.
 
 ```bash
 ./install-packages.sh
+./install-packages.sh --minimal
 ```
 
 `install.sh` installs user configuration without requiring root:
@@ -32,7 +33,12 @@ Preview either operation first:
 ```bash
 ./install-packages.sh --dry-run
 ./install.sh --dry-run
+./install.sh --log "$HOME/.local/state/dotfiles-install.log"
 ```
+
+Use `--minimal` to install only `git`, `zsh`, `curl`, and `micro`. The default
+is `--full`, which attempts the optional tools in the selected manifest. Pass
+`--log FILE` to either installer to append its output to a log file.
 
 The configuration installer links Starship, Git, Git's global ignore file, and
 tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It always configures both
@@ -50,6 +56,7 @@ that backup name already exists.
 
 ```powershell
 .\windows\install-packages.ps1
+.\windows\install-packages.ps1 -Minimal
 ```
 
 `windows/install.ps1` registers the repository profile in the current user's
@@ -61,8 +68,9 @@ installed:
 ```
 
 Use `-DryRun` with either script to preview the actions. Winget comes from
-Microsoft App Installer. The scripts do not require administrator access for
-profile configuration.
+Microsoft App Installer. Use `-Minimal` for Git and micro only, or `-LogFile`
+to capture an installation transcript. The scripts do not require
+administrator access for profile configuration.
 
 ## Package Manifests
 
@@ -129,6 +137,13 @@ PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
 
 PowerShell also provides `ep`/`Edit-Profile`, `ff`/`Find-File`, `head`,
 `tail`, `uptime`, `cpy`, `pst`, and `profile-help`.
+
+Additional workflow helpers include `mktempdir`/`New-TempDirectory`,
+`psg`/`Show-ProcessMatch`, `sysinfo`/`Get-SystemInfo`,
+`weather`/`Get-Weather`, `backup`/`Backup-Item`, and `doctor`/
+`Invoke-DotfilesDoctor`. `gclean` previews untracked-file deletion on Unix;
+use `gclean-force` when deletion is intentional. PowerShell provides
+`gclean-preview` for the same preview behavior.
 
 #### Directory trees
 

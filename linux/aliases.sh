@@ -26,7 +26,9 @@ alias gco='git checkout'
 alias gb='git branch'
 alias gsw='git switch'
 alias gcp='git cherry-pick'
-alias gclean='git clean -fd'
+alias gclean='git clean -fdn'
+alias gclean-force='git clean -fd'
+alias groot='cd -- "$(git rev-parse --show-toplevel 2>/dev/null || pwd)"'
 alias grep='grep --color=auto'
 
 # Docker shortcuts

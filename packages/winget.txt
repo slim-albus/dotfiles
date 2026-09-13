@@ -11,3 +11,8 @@ sharkdp.fd
 junegunn.fzf
 zyedidia.micro
 aristocratos.btop4win
+sxyazi.yazi
+ajeetdsouza.zoxide
+sharkdp.bat
+dandavison.delta
+direnv.direnv

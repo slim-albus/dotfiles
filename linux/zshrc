@@ -22,6 +22,14 @@ source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
 
+if command -v direnv >/dev/null 2>&1; then
+	eval "$(direnv hook zsh)"
+fi
+
+if command -v zoxide >/dev/null 2>&1; then
+	eval "$(zoxide init zsh)"
+fi
+
 # Enable Zsh's built-in completion system with a per-user cache.
 autoload -Uz compinit
 zstyle ':completion:*' menu select
@@ -33,4 +41,3 @@ mkdir -p -- "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
 
 source "$DOTFILES_ROOT/linux/prompt.sh"
-unset DOTFILES_ROOT

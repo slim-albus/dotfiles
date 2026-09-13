@@ -34,6 +34,7 @@ function gb  { git branch }
 function gsw { git switch $args }
 function gcp { git cherry-pick $args }
 function gclean { git clean -fd $args }
+function gclean-preview { git clean -fdn $args }
 
 # Docker shortcuts
 function dps { docker ps }

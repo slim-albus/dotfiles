@@ -2,10 +2,12 @@
 set -euo pipefail
 
 DRY_RUN=0
+INSTALL_MODE=full
+LOG_FILE=''
 
 usage() {
     cat <<'EOF'
-Usage: ./install-packages.sh [--dry-run]
+Usage: ./install-packages.sh [--dry-run] [--minimal|--full] [--log FILE]
 
 Install the packages listed in packages/<package-manager>.txt. The script
 detects apt or dnf and uses sudo for package-manager operations. Git is
@@ -39,11 +41,23 @@ package_available() {
 while (($#)); do
     case "$1" in
         --dry-run) DRY_RUN=1 ;;
+        --minimal) INSTALL_MODE=minimal ;;
+        --full) INSTALL_MODE=full ;;
+        --log)
+            (($# > 1)) || { printf '%s requires a file path.\n' "$1" >&2; exit 2; }
+            LOG_FILE="$2"
+            shift
+            ;;
         -h|--help) usage; exit 0 ;;
         *) printf 'Unknown option: %s\n' "$1" >&2; usage >&2; exit 2 ;;
     esac
     shift
 done
+
+if [[ -n "$LOG_FILE" ]]; then
+    mkdir -p -- "$(dirname -- "$LOG_FILE")"
+    exec > >(tee -a "$LOG_FILE") 2>&1
+fi
 
 # Select the manifest from the package manager available on this machine.
 if command -v apt-get >/dev/null 2>&1; then
@@ -70,12 +84,17 @@ if ((${#requested_packages[@]} == 0)); then
     exit 1
 fi
 
-required_packages=(git)
+if [[ "$INSTALL_MODE" == minimal ]]; then
+    required_packages=(git zsh curl micro)
+else
+    required_packages=(git)
+fi
 optional_packages=()
 for package in "${requested_packages[@]}"; do
-    if [[ "$package" == git ]]; then
+    if [[ " ${required_packages[*]} " == *" $package "* ]]; then
         continue
     fi
+    [[ "$INSTALL_MODE" == minimal ]] && continue
     optional_packages+=("$package")
 done
 

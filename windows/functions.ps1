@@ -38,6 +38,61 @@ function Get-BigFiles {
         Select-Object -First $Top FullName, @{n='MB';e={ [math]::Round($_.Length/1MB,2) }}
 }
 
+function New-TempDirectory {
+    $directory = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
+    New-Item -ItemType Directory -Path $directory | Out-Null
+    Set-Location $directory
+    $directory
+}
+
+function Show-ProcessMatch {
+    param([Parameter(Mandatory)][string]$Name)
+    Get-Process | Where-Object ProcessName -Match $Name
+}
+
+function Get-SystemInfo {
+    Get-ComputerInfo -Property OsName, OsVersion, CsName, OsUptime -ErrorAction SilentlyContinue
+    Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free
+}
+
+function Get-Weather {
+    param([string]$Location = "")
+    if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+        throw 'curl is required for weather.'
+    }
+    curl.exe -fsSL "https://wttr.in/$Location?format=3"
+}
+
+function Backup-Item {
+    param([Parameter(Mandatory)][string]$Path)
+    $item = Get-Item -LiteralPath $Path -ErrorAction Stop
+    $destination = "$($item.FullName).$(Get-Date -Format yyyyMMdd-HHmmss).bak"
+    Copy-Item -LiteralPath $item.FullName -Destination $destination -Recurse
+    $destination
+}
+
+function Invoke-DotfilesDoctor {
+    $failed = $false
+    Write-Host 'Dotfiles doctor'
+    foreach ($command in @('git', 'pwsh')) {
+        if (Get-Command $command -ErrorAction SilentlyContinue) {
+            Write-Host "OK   command: $command"
+        } else {
+            Write-Host "MISS command: $command"
+            $failed = $true
+        }
+    }
+    $profileLine = ". `"$PSScriptRoot\Microsoft.PowerShell_profile.ps1`""
+    if (Select-String -Path $PROFILE.CurrentUserAllHosts -SimpleMatch $profileLine -Quiet -ErrorAction SilentlyContinue) {
+        Write-Host 'OK   PowerShell startup'
+    } else {
+        Write-Host 'MISS PowerShell startup'
+        $failed = $true
+    }
+    if ($failed) { return 1 }
+    return 0
+}
+
 function Show-Tree {
     param([string]$Path = ".", [string]$OutputFile)
     $root = Get-Item -LiteralPath $Path -ErrorAction SilentlyContinue
@@ -160,6 +215,7 @@ PowerShell profile commands:
   reload             Reload the profile
   ff NAME [PATH]     Find files recursively by name
     Show-Tree [PATH] [OUTPUT_FILE]
+    Invoke-DotfilesDoctor  Check the PowerShell setup
   head FILE [N]      Show the first N lines
   tail FILE [N]      Show the last N lines
   uptime             Show system uptime

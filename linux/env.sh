@@ -1,8 +1,10 @@
 # Environment variables and PATH additions.
 
-export EDITOR="${EDITOR:-micro}"
-export VISUAL="${VISUAL:-$EDITOR}"
-export PAGER="${PAGER:-less}"
+export EDITOR='micro'
+export VISUAL='micro'
+export GIT_EDITOR='micro'
+export PAGER='less'
+export GIT_PAGER='less'
 export STARSHIP_CONFIG="${STARSHIP_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml}"
 
 path_add() {
