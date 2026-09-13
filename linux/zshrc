@@ -1,8 +1,28 @@
 # Keep interactive Zsh sessions aligned with the Bash configuration.
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${(%):-%N}")/.." && pwd)"
+
+# Load Oh My Zsh plugins when the installer has provisioned them.
+export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
+if [[ -r "$ZSH/oh-my-zsh.sh" ]]; then
+	ZSH_THEME=""
+	plugins=(git zsh-autosuggestions zsh-autocomplete)
+	source "$ZSH/oh-my-zsh.sh"
+fi
+
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
+
+# Enable Zsh's built-in completion system with a per-user cache.
+autoload -Uz compinit
+zstyle ':completion:*' menu select
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' use-cache on
+zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+mkdir -p -- "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
+
 source "$DOTFILES_ROOT/linux/prompt.sh"
 unset DOTFILES_ROOT

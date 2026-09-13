@@ -5,6 +5,14 @@ DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
+
+# Use the distribution-provided Bash completion definitions when available.
+if [[ -r /usr/share/bash-completion/bash_completion ]]; then
+	source /usr/share/bash-completion/bash_completion
+elif [[ -r /etc/bash_completion ]]; then
+	source /etc/bash_completion
+fi
+
 source "$DOTFILES_ROOT/linux/prompt.sh"
 
 unset DOTFILES_ROOT

@@ -8,7 +8,8 @@ This document is the detailed reference for the repository. The root
 ### Linux and WSL
 
 `install-packages.sh` detects `apt` or `dnf`, reads the matching manifest, and
-installs packages with `sudo`.
+installs every package with `sudo`. It stops before installing if any listed
+package is unavailable.
 
 ```bash
 ./install-packages.sh
@@ -20,6 +21,11 @@ installs packages with `sudo`.
 ./install.sh
 ```
 
+Before changing any files, `install.sh` detects apt or dnf and verifies that
+every tool from the matching package manifest is available. If anything is
+missing, it stops and asks you to run `install-packages.sh` first. Debian's
+`fd-find` command is checked as `fdfind`; Fedora's is checked as `fd`.
+
 Preview either operation first:
 
 ```bash
@@ -28,8 +34,11 @@ Preview either operation first:
 ```
 
 The configuration installer links Starship, Git, Git's global ignore file, and
-tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It adds the Bash entry point to
-`~/.bashrc`, and adds the Zsh entry point only when `~/.zshrc` already exists.
+tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It always configures both
+`~/.bashrc` and `~/.zshrc`, regardless of the user's current default shell.
+It also installs Oh My Zsh, `zsh-autosuggestions`, and `zsh-autocomplete` into
+`~/.oh-my-zsh` when Git is available. Existing Oh My Zsh installations and
+plugin directories are left untouched.
 Existing link targets are moved to `.dotfiles-backup`; a timestamp is added if
 that backup name already exists.
 
@@ -76,6 +85,15 @@ Linux and WSL load these files through `linux/bashrc` or `linux/zshrc`:
 - `aliases.sh`: navigation, listings, Git shortcuts, and grep coloring.
 - `functions.sh`: reusable development commands.
 - `prompt.sh`: Starship initialization.
+
+`bashrc` loads the system Bash completion definitions when installed. `zshrc`
+enables Zsh's built-in `compinit`, case-insensitive matching, menu selection,
+and a cached completion dump under `${XDG_CACHE_HOME:-$HOME/.cache}/zsh`.
+When available, Oh My Zsh loads the Git, `zsh-autosuggestions`, and
+`zsh-autocomplete` plugins. Starship remains the only prompt provider; Oh My
+Zsh's theme is disabled.
+Both startup files are configured by `install.sh` even when only one shell is
+currently in use.
 
 PowerShell uses the equivalent modules:
 

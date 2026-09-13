@@ -7,9 +7,9 @@ usage() {
     cat <<'EOF'
 Usage: ./install-packages.sh [--dry-run]
 
-Install the packages listed in packages/<package-manager>.txt. The script
-detects apt or dnf and uses sudo for package-manager operations. Packages
-unavailable in the configured repositories are skipped with a warning.
+Install every package listed in packages/<package-manager>.txt. The script
+detects apt or dnf and uses sudo for package-manager operations. Installation
+stops if a listed package is unavailable.
 EOF
 }
 
@@ -60,14 +60,15 @@ if ((${#requested_packages[@]} == 0)); then
 fi
 
 packages=()
-# Filter comments and check package availability before installing.
+# Check the complete manifest before installing anything.
 if [[ "$package_manager" == apt ]]; then
     run sudo apt-get update
     for package in "${requested_packages[@]}"; do
         if (( DRY_RUN )) || apt-cache show "$package" >/dev/null 2>&1; then
             packages+=("$package")
         else
-            log "skipping unavailable apt package: $package"
+            printf 'Package unavailable from apt repositories: %s\n' "$package" >&2
+            exit 1
         fi
     done
     run sudo apt-get install -y "${packages[@]}"
@@ -76,7 +77,8 @@ else
         if (( DRY_RUN )) || dnf list --available "$package" >/dev/null 2>&1; then
             packages+=("$package")
         else
-            log "skipping unavailable dnf package: $package"
+            printf 'Package unavailable from dnf repositories: %s\n' "$package" >&2
+            exit 1
         fi
     done
     run sudo dnf install -y "${packages[@]}"
