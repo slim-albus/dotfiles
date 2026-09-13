@@ -25,9 +25,9 @@ Use `--dry-run` or `-DryRun` to preview changes. Package lists live in
 Read the complete feature and configuration reference in
 [docs/usage.md](docs/usage.md).
 
-The default terminal editor is `micro`. Docker shortcuts, monitoring tools,
-directory tree helpers, monitoring tools, and all shell commands are listed in
-the full reference.
+The default terminal editor is `micro`. Docker shortcuts, directory tree
+helpers, monitoring tools, and all shell commands are listed in the full
+reference.
 
 ## Structure
 

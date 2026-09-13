@@ -12,8 +12,8 @@ path_add() {
     esac
 }
 
-for path in "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/bin"; do
-    [[ -d "$path" ]] && path_add "$path"
+for path_entry in "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/bin"; do
+    [[ -d "$path_entry" ]] && path_add "$path_entry"
 done
 export PATH
 

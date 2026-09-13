@@ -10,6 +10,14 @@ if [[ -r "$ZSH/oh-my-zsh.sh" ]]; then
 	source "$ZSH/oh-my-zsh.sh"
 fi
 
+# Keep the existing Bash history available in Zsh and persist new commands.
+HISTFILE="${HISTFILE:-$HOME/.zsh_history}"
+HISTSIZE=10000
+SAVEHIST=10000
+setopt appendhistory
+setopt inc_append_history
+setopt share_history
+
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"

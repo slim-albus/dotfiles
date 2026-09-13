@@ -8,8 +8,8 @@ usage() {
     cat <<'EOF'
 Usage: ./install.sh [--dry-run]
 
-Verify the Linux package manifest, then install the shared and shell
-configuration for the current user.
+Verify Git, then install the shared and shell configuration for the current
+user.
 Existing files are backed up with a .dotfiles-backup suffix before they are
 replaced. The installer does not install packages or require root access.
 EOF
@@ -27,43 +27,9 @@ run() {
     fi
 }
 
-read_package_manifest() {
-    local package_manager="$1"
-    local package_file="$DOTFILES_ROOT/packages/$package_manager.txt"
-
-    [[ -f "$package_file" ]] || {
-        printf 'Package list not found: %s\n' "$package_file" >&2
-        return 1
-    }
-    sed -e 's/\r$//' -e 's/[[:space:]]*#.*//' -e '/^[[:space:]]*$/d' "$package_file"
-}
-
-command_for_package() {
-    local package_manager="$1"
-    local package="$2"
-
-    case "$package" in
-        fd-find)
-            [[ "$package_manager" == apt ]] && printf 'fdfind' || printf 'fd'
-            ;;
-        bash-completion) printf '/usr/share/bash-completion/bash_completion' ;;
-        *) printf '%s' "$package" ;;
-    esac
-}
-
 verify_required_tools() {
-    local package_manager="$1"
     local missing=()
-    local package command_name
-
-    while IFS= read -r package; do
-        command_name="$(command_for_package "$package_manager" "$package")"
-        if [[ "$command_name" == /* ]]; then
-            [[ -r "$command_name" ]] || missing+=("$package ($command_name)")
-        elif ! command -v "$command_name" >/dev/null 2>&1; then
-            missing+=("$package ($command_name)")
-        fi
-    done < <(read_package_manifest "$package_manager")
+    command -v git >/dev/null 2>&1 || missing+=(git)
 
     if ((${#missing[@]})); then
         printf 'Required tools are missing:\n' >&2
@@ -71,7 +37,7 @@ verify_required_tools() {
         printf 'Run ./install-packages.sh first, then run ./install.sh again.\n' >&2
         return 1
     fi
-    log "verified all tools from packages/$package_manager.txt"
+    log 'verified required installer tools'
 }
 
 clone_if_missing() {
@@ -126,6 +92,10 @@ link_file() {
 
     run mkdir -p "$(dirname -- "$target")"
     if [[ -e "$target" || -L "$target" ]]; then
+        if [[ "$target" -ef "$source" ]]; then
+            log "already linked: $target"
+            return 0
+        fi
         backup_if_needed "$target" "$source"
     fi
     run ln -s "$source" "$target"
@@ -166,17 +136,7 @@ if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* ]]; then
     exit 1
 fi
 
-# Detect the same package manager used by the package installer and gate all
-# configuration changes on the complete native manifest being available.
-if command -v apt-get >/dev/null 2>&1; then
-    package_manager=apt
-elif command -v dnf >/dev/null 2>&1; then
-    package_manager=dnf
-else
-    printf 'No supported package manager found. Run this on an apt or dnf system.\n' >&2
-    exit 1
-fi
-verify_required_tools "$package_manager"
+verify_required_tools
 
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
 shell_entry="source \"$DOTFILES_ROOT/linux/bashrc\""

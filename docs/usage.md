@@ -8,8 +8,9 @@ This document is the detailed reference for the repository. The root
 ### Linux and WSL
 
 `install-packages.sh` detects `apt` or `dnf`, reads the matching manifest, and
-installs every package with `sudo`. It stops before installing if any listed
-package is unavailable.
+installs packages with `sudo`. `git` is required for the setup scripts and is
+checked before installation; optional convenience packages are attempted
+individually and skipped if unavailable.
 
 ```bash
 ./install-packages.sh
@@ -21,10 +22,10 @@ package is unavailable.
 ./install.sh
 ```
 
-Before changing any files, `install.sh` detects apt or dnf and verifies that
-every tool from the matching package manifest is available. If anything is
-missing, it stops and asks you to run `install-packages.sh` first. Debian's
-`fd-find` command is checked as `fdfind`; Fedora's is checked as `fd`.
+Before changing any files, `install.sh` verifies the core tool it needs for
+optional Oh My Zsh setup: `git`. The remaining manifest packages are optional
+interactive conveniences and do not block configuration installation. Debian's
+`fd-find` command is available as `fdfind`; Fedora's is available as `fd`.
 
 Preview either operation first:
 

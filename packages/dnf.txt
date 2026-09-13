@@ -1,7 +1,7 @@
 # Packages installed with dnf.
 git
 curl
-wget
+wget2-wget
 unzip
 tree
 tmux
