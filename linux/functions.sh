@@ -144,6 +144,15 @@ reload() {
     fi
 }
 
+history-import-bash() {
+    local bash_history="${1:-$HOME/.bash_history}"
+    [[ -n "${ZSH_VERSION:-}" ]] || { printf 'history-import-bash is available in Zsh only.\n' >&2; return 1; }
+    [[ -r "$bash_history" ]] || { printf 'Not found: %s\n' "$bash_history" >&2; return 1; }
+    fc -R "$bash_history"
+    fc -W "$HISTFILE"
+    printf 'Imported Bash history from %s.\n' "$bash_history"
+}
+
 bigfiles() {
     local directory="${1:-.}"
     local count="${2:-20}"
@@ -189,6 +198,63 @@ doctor() {
     grep -Fqx "source \"$expected_zsh_source\"" "$HOME/.zshrc" 2>/dev/null &&
         printf 'OK   zsh startup\n' || { printf 'MISS zsh startup\n'; failed=1; }
     return "$failed"
+}
+
+dotfiles-help() {
+        local output_file="${1:-}"
+        local manual
+        manual=$(cat <<'EOF'
+Dotfiles shell manual
+
+Navigation
+    mkcd DIR                 Create DIR and enter it
+    mktempdir                Create a temporary directory and enter it
+    project_root             Print the current Git root
+    croot                    Change to the current Git root
+    up [N]                   Move up N directories
+
+Files and archives
+    bigfiles [DIR] [N]       Show the largest entries
+    treeview [DIR] [FILE]    Print or save a directory tree
+    extract ARCHIVE          Extract common archive formats
+    backup FILE              Create a timestamped copy
+    json FILE                Pretty-print JSON with jq
+    venv [DIR]               Create and activate a Python virtualenv
+
+System and network
+    port PORT                Show a listening TCP port
+    killport PORT            Stop processes on a TCP port
+    psg PATTERN              Search running processes
+    sysinfo                  Show OS, memory, uptime, and disk details
+    weather [LOCATION]       Show current weather from wttr.in
+    serve [DIR] [PORT]       Start a local HTTP server
+
+Git and shell
+    gs gd gl ...             Git shortcuts; use `alias` to list all aliases
+    gclean                   Preview untracked-file deletion
+    gclean-force             Delete untracked files and directories
+    path                     Print PATH entries
+    reload                   Reload the current shell profile
+    doctor                   Check dotfiles links, startup files, and tools
+
+Optional tools
+    zoxide                   Smart directory jumping; use `z` and `zi`
+    direnv                   Load project environment files automatically
+    yazi                     Terminal file manager
+    bat, git-delta            File preview and readable Git diffs
+
+Installation
+    ./install-packages.sh --minimal
+    ./install-packages.sh --full
+    ./install.sh --dry-run
+    Add --log FILE to either installer to save its output.
+EOF
+)
+        if [[ -n "$output_file" ]]; then
+                printf '%s\n' "$manual" >"$output_file"
+        else
+                printf '%s\n' "$manual"
+        fi
 }
 
 path() {

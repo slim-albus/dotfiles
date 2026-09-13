@@ -17,6 +17,7 @@ SAVEHIST=10000
 setopt appendhistory
 setopt inc_append_history
 setopt share_history
+setopt extended_history
 
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"

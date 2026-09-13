@@ -57,6 +57,10 @@ setup_oh_my_zsh() {
     local oh_my_zsh_dir="${ZSH:-$HOME/.oh-my-zsh}"
     local custom_dir="$oh_my_zsh_dir/custom"
 
+    if ! command -v zsh >/dev/null 2>&1; then
+        log 'skipping Oh My Zsh: zsh is not installed'
+        return 0
+    fi
     if ! command -v git >/dev/null 2>&1; then
         log "skipping Oh My Zsh: git is not installed"
         return 0
@@ -160,6 +164,10 @@ link_file "$DOTFILES_ROOT/shared/git/ignore" "$config_dir/git/ignore"
 link_file "$DOTFILES_ROOT/shared/tmux/tmux.conf" "$config_dir/tmux/tmux.conf"
 setup_oh_my_zsh
 ensure_source_line "$HOME/.bashrc" "$shell_entry"
-ensure_source_line "$HOME/.zshrc" "$zsh_entry"
+if command -v zsh >/dev/null 2>&1; then
+    ensure_source_line "$HOME/.zshrc" "$zsh_entry"
+else
+    log 'skipping Zsh setup: zsh is not installed'
+fi
 
 printf 'Dotfiles installed from %s\n' "$DOTFILES_ROOT"

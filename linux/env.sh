@@ -2,9 +2,8 @@
 
 export EDITOR='micro'
 export VISUAL='micro'
-export GIT_EDITOR='micro'
 export PAGER='less'
-export GIT_PAGER='less'
+unset GIT_EDITOR GIT_PAGER
 export STARSHIP_CONFIG="${STARSHIP_CONFIG:-${XDG_CONFIG_HOME:-$HOME/.config}/starship.toml}"
 
 path_add() {

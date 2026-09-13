@@ -41,11 +41,11 @@ is `--full`, which attempts the optional tools in the selected manifest. Pass
 `--log FILE` to either installer to append its output to a log file.
 
 The configuration installer links Starship, Git, Git's global ignore file, and
-tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It always configures both
-`~/.bashrc` and `~/.zshrc`, regardless of the user's current default shell.
-It also installs Oh My Zsh, `zsh-autosuggestions`, and `zsh-autocomplete` into
-`~/.oh-my-zsh` when Git is available. Existing Oh My Zsh installations and
-plugin directories are left untouched.
+tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It always configures `~/.bashrc`
+and configures `~/.zshrc` plus Oh My Zsh when Zsh is installed. It also
+installs `zsh-autosuggestions` and `zsh-autocomplete` into `~/.oh-my-zsh` when
+Git is available. Existing Oh My Zsh installations and plugin directories are
+left untouched.
 Existing link targets are moved to `.dotfiles-backup`; a timestamp is added if
 that backup name already exists.
 
@@ -101,8 +101,8 @@ and a cached completion dump under `${XDG_CACHE_HOME:-$HOME/.cache}/zsh`.
 When available, Oh My Zsh loads the Git, `zsh-autosuggestions`, and
 `zsh-autocomplete` plugins. Starship remains the only prompt provider; Oh My
 Zsh's theme is disabled.
-Both startup files are configured by `install.sh` even when only one shell is
-currently in use.
+The Bash startup file is always configured; the Zsh startup file is configured
+when Zsh is installed.
 
 PowerShell uses the equivalent modules:
 
@@ -144,6 +144,15 @@ Additional workflow helpers include `mktempdir`/`New-TempDirectory`,
 `Invoke-DotfilesDoctor`. `gclean` previews untracked-file deletion on Unix;
 use `gclean-force` when deletion is intentional. PowerShell provides
 `gclean-preview` for the same preview behavior.
+
+Zsh history uses `~/.zsh_history`. Run `history-import-bash` to load
+`~/.bash_history` into the current Zsh session and save it to the Zsh history
+file. Start a fresh shell with `exec zsh` after changing history configuration.
+
+For a printable command reference, run `dotfiles-help` on Unix or
+`Show-DotfilesHelp` in PowerShell. Pass a filename to either command to save a
+plain-text manual, for example `dotfiles-help dotfiles-manual.txt` or
+`Show-DotfilesHelp -OutputFile dotfiles-manual.txt`.
 
 #### Directory trees
 
@@ -214,7 +223,9 @@ commands containing common secret names from history.
 
 ### Editor and monitoring tools
 
-`micro` is the default value of `EDITOR` and the Git commit editor. The
+`micro` is the default value of `EDITOR` and the Git commit editor. Git output
+uses `cat` instead of an interactive pager, so logs and diffs do not open a
+second terminal buffer. The
 package manifests install `micro`, `btop`, and `htop` on Linux. Windows uses
 the Winget package `aristocratos.btop4win` instead of Linux `btop`/`htop`.
 
