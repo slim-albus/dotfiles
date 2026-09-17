@@ -136,6 +136,7 @@ venv() {
     python3 -m venv "$directory" && source "$directory/bin/activate"
 }
 
+unalias reload 2>/dev/null || true
 reload() {
     if [[ -n "${ZSH_VERSION:-}" ]]; then
         source "$HOME/.zshrc"
