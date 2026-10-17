@@ -1,37 +1,84 @@
 # ============================================================
-# Environment variables
+# Environment variables & Path configuration
 # ============================================================
 
-# Default editor
-$env:EDITOR = "micro"       # or nvim, code, notepad++, etc.
+# Default editor & pager
+if (-not $env:EDITOR) { $env:EDITOR = "micro" }
+if (-not $env:PAGER)  { $env:PAGER  = "less" }
 
-# Better ls/pager defaults
-$env:PAGER = "less"
+# Tell Starship where its configuration lives
+$dotfilesRoot = if ($global:DotfilesRoot) { $global:DotfilesRoot } else { Split-Path -Parent $PSScriptRoot }
+$env:STARSHIP_CONFIG = Join-Path $dotfilesRoot "shared\starship.toml"
 
-# Tell Starship where its config lives (so it doesn't need a symlink)
-$env:STARSHIP_CONFIG = Join-Path $DotfilesRoot "shared\starship.toml"
+# ---- Fast PATH Prepending ----
+$pathEntries = @(
+    "$HOME\.bun\bin",
+    "$HOME\.local\bin",
+    "$HOME\.cargo\bin",
+    "$HOME\go\bin",
+    "$HOME\scoop\shims",
+    "$env:USERPROFILE\bin"
+)
 
-# ---- PATH additions ----
-# Helper: prepend a path only if it exists and isn't already present
-function Add-ToPath {
-    param([string]$Path)
-    if ((Test-Path $Path) -and ($env:Path -notlike "*$Path*")) {
-        $env:Path = "$Path;$env:Path"
+$currentPaths = $env:Path -split [IO.Path]::PathSeparator
+$newPaths = [System.Collections.Generic.List[string]]::new()
+
+foreach ($entry in $pathEntries) {
+    if ((Test-Path -LiteralPath $entry) -and ($currentPaths -notcontains $entry)) {
+        $newPaths.Add($entry)
     }
 }
 
-Add-ToPath "$HOME\.local\bin"
-Add-ToPath "$HOME\.cargo\bin"
-Add-ToPath "$HOME\go\bin"
-Add-ToPath "$HOME\scoop\shims"
-Add-ToPath "$env:USERPROFILE\bin"
-
-if (Get-Command zoxide -ErrorAction SilentlyContinue) {
-    Invoke-Expression (& { zoxide init powershell | Out-String })
+if ($newPaths.Count -gt 0) {
+    $env:Path = ($newPaths + $currentPaths) -join [IO.Path]::PathSeparator
 }
 
-if (Get-Command direnv -ErrorAction SilentlyContinue) {
-    Invoke-Expression (& { direnv hook pwsh | Out-String })
+# ---- Tool Initializers (Cached for Sub-150ms Startup) ----
+$cacheDir = Join-Path $env:LOCALAPPDATA "dotfiles-cache"
+if (-not (Test-Path -LiteralPath $cacheDir)) {
+    New-Item -ItemType Directory -Path $cacheDir -Force | Out-Null
 }
 
-Remove-Item Function:\Add-ToPath  # keep global namespace clean
+# Zoxide initialization
+$zoxideBin = Get-Command zoxide.exe -ErrorAction SilentlyContinue
+if ($zoxideBin) {
+    $zoxideCache = Join-Path $cacheDir "zoxide_init.ps1"
+    $needGen = $true
+    if (Test-Path -LiteralPath $zoxideCache) {
+        $cacheItem = Get-Item -LiteralPath $zoxideCache
+        $binItem = Get-Item -LiteralPath $zoxideBin.Source
+        if ($cacheItem.LastWriteTime -ge $binItem.LastWriteTime) {
+            $needGen = $false
+        }
+    }
+    if ($needGen) {
+        try {
+            & $zoxideBin.Source init --cmd z powershell | Out-File -FilePath $zoxideCache -Encoding utf8
+        } catch {}
+    }
+    if (Test-Path -LiteralPath $zoxideCache) {
+        . $zoxideCache
+    }
+}
+
+# Direnv initialization
+$direnvBin = Get-Command direnv.exe -ErrorAction SilentlyContinue
+if ($direnvBin) {
+    $direnvCache = Join-Path $cacheDir "direnv_init.ps1"
+    $needGen = $true
+    if (Test-Path -LiteralPath $direnvCache) {
+        $cacheItem = Get-Item -LiteralPath $direnvCache
+        $binItem = Get-Item -LiteralPath $direnvBin.Source
+        if ($cacheItem.LastWriteTime -ge $binItem.LastWriteTime) {
+            $needGen = $false
+        }
+    }
+    if ($needGen) {
+        try {
+            & $direnvBin.Source hook pwsh | Out-File -FilePath $direnvCache -Encoding utf8
+        } catch {}
+    }
+    if (Test-Path -LiteralPath $direnvCache) {
+        . $direnvCache
+    }
+}

@@ -3,17 +3,39 @@
 # Loads everything from ~\dotfiles\windows\ in order.
 # ============================================================
 
-$DotfilesRoot = Split-Path -Parent $PSScriptRoot   # ~/dotfiles
+$scriptPath = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Definition }
+if (-not $scriptPath -and (Test-Path "$HOME\dotfiles\windows")) {
+    $scriptPath = "$HOME\dotfiles\windows"
+}
+$global:DotfilesRoot = Split-Path -Parent $scriptPath
+
+# Determine interactive shell capability
+$global:IsInteractiveShell = try {
+    ($Host.Name -eq 'ConsoleHost' -or $Host.Name -eq 'Visual Studio Code Host') -and
+    -not [Console]::IsInputRedirected -and
+    -not [Console]::IsOutputRedirected
+} catch {
+    $false
+}
+
+# Set console title if interactive
+if ($global:IsInteractiveShell) {
+    try {
+        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        $adminTag = if ($isAdmin) { ' [ADMIN]' } else { '' }
+        $Host.UI.RawUI.WindowTitle = "PowerShell $($PSVersionTable.PSVersion)$adminTag"
+    } catch {}
+}
 
 # ---- Environment (PATH, EDITOR, etc.) ----
-. "$PSScriptRoot\env.ps1"
+. "$scriptPath\env.ps1"
 
 # ---- Aliases + Functions ----
-. "$PSScriptRoot\aliases.ps1"
-. "$PSScriptRoot\functions.ps1"
+. "$scriptPath\aliases.ps1"
+. "$scriptPath\functions.ps1"
 
-# ---- Modules (choco, posh-git, etc.) ----
-. "$PSScriptRoot\modules.ps1"
+# ---- Modules & Completions (PSReadLine, bun, git) ----
+. "$scriptPath\modules.ps1"
 
 # ---- Prompt / Starship ----
-. "$PSScriptRoot\prompt.ps1"
+. "$scriptPath\prompt.ps1"

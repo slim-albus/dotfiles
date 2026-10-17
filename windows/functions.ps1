@@ -1,36 +1,130 @@
 # ============================================================
-# Functions
+# Functions & Extended Utilities
 # ============================================================
 
-# Network helpers
+# Load the interactive manual 'dots'
+$dotsScript = Join-Path $PSScriptRoot 'dots.ps1'
+if (Test-Path -LiteralPath $dotsScript) {
+    . $dotsScript
+}
+
+# ---- Network & Process Helpers ----
 function port {
     param([Parameter(Mandatory)][int]$Port)
     Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue |
         Select-Object LocalAddress, LocalPort, State,
-                      @{n='Process';e={ (Get-Process -Id $_.OwningProcess).ProcessName }}
+                      @{n='Process';e={ (Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName }},
+                      @{n='PID';e={ $_.OwningProcess }}
 }
 
-# Archive and profile helpers
-# Extract any archive Windows can handle
+function killport {
+    param([Parameter(Mandatory)][int]$Port)
+    $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
+    if (-not $connections) {
+        Write-Host "No process listening on port $Port." -ForegroundColor Yellow
+        return
+    }
+    $pids = $connections | Select-Object -ExpandProperty OwningProcess -Unique
+    foreach ($processId in $pids) {
+        try {
+            Stop-Process -Id $processId -Force -ErrorAction Stop
+            Write-Host "Stopped process ${processId} listening on port $Port." -ForegroundColor Green
+        } catch {
+            Write-Error "Failed to stop process ${processId}: $_"
+        }
+    }
+}
+
+function pkill {
+    param([Parameter(Mandatory)][string]$Name)
+    Get-Process -Name $Name -ErrorAction SilentlyContinue | Stop-Process -Force
+}
+
+function pgrep {
+    param([Parameter(Mandatory)][string]$Name)
+    Get-Process -Name "*$Name*" -ErrorAction SilentlyContinue
+}
+
+# ---- File & Archive Helpers ----
 function extract {
     param([Parameter(Mandatory)][string]$Path)
     if (-not (Test-Path $Path)) { Write-Error "Not found: $Path"; return }
     $ext = [IO.Path]::GetExtension($Path).ToLower()
     switch ($ext) {
-        '.zip' { Expand-Archive -Path $Path -DestinationPath (Split-Path $Path -Parent) }
-        default { Write-Host "Unsupported archive type: $ext" -ForegroundColor Yellow }
+        '.zip' { Expand-Archive -Path $Path -DestinationPath (Split-Path $Path -Parent) -Force }
+        default { Write-Host "Unsupported archive type: $ext (use 7z or tar for other formats)" -ForegroundColor Yellow }
     }
 }
-    # File and project helpers
 
-# Reload the profile
-function Reload-Profile {
-    . $PROFILE
-    Write-Host "Profile reloaded." -ForegroundColor Green
+function trash {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory, ValueFromPipeline, Position = 0)]
+        [string[]]$Path
+    )
+
+    process {
+        foreach ($target in $Path) {
+            $resolved = Resolve-Path -LiteralPath $target -ErrorAction SilentlyContinue
+            if (-not $resolved) {
+                Write-Warning "Item not found: $target"
+                continue
+            }
+            $fullPath = $resolved.ProviderPath
+            $item = Get-Item -LiteralPath $fullPath
+            $parentPath = if ($item.PSIsContainer) {
+                if ($item.Parent) { $item.Parent.FullName } else { Split-Path -Path $item.FullName -Parent }
+            } else {
+                $item.DirectoryName
+            }
+
+            if ([string]::IsNullOrWhiteSpace($parentPath)) {
+                Write-Error "Cannot move root directory to Recycle Bin: $fullPath"
+                continue
+            }
+
+            try {
+                $shell = New-Object -ComObject 'Shell.Application'
+                $shellFolder = $shell.NameSpace($parentPath)
+                $shellItem = if ($shellFolder) { $shellFolder.ParseName($item.Name) } else { $null }
+
+                if ($shellItem) {
+                    $shellItem.InvokeVerb('delete')
+                    Write-Host "Moved to Recycle Bin: $fullPath" -ForegroundColor DarkGray
+                } else {
+                    Write-Error "Could not move to Recycle Bin: $fullPath"
+                }
+            } catch {
+                Write-Error "Failed to recycle ${fullPath}: $_"
+            }
+        }
+    }
 }
-Set-Alias reload Reload-Profile
 
-# List files by size, descending
+function sed {
+    param(
+        [Parameter(Mandatory)][string]$File,
+        [Parameter(Mandatory)][string]$Find,
+        [Parameter(Mandatory)][string]$Replace
+    )
+    (Get-Content -LiteralPath $File).Replace($Find, $Replace) | Set-Content -LiteralPath $File
+}
+
+function which {
+    param([Parameter(Mandatory)][string]$Name)
+    Get-Command -Name $Name -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+}
+
+function head {
+    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10)
+    Get-Content -LiteralPath $Path -Head $Lines
+}
+
+function tail {
+    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10, [switch]$Wait)
+    Get-Content -LiteralPath $Path -Tail $Lines -Wait:$Wait
+}
+
 function Get-BigFiles {
     param([string]$Path = ".", [int]$Top = 20)
     Get-ChildItem -Path $Path -Recurse -File -ErrorAction SilentlyContinue |
@@ -38,114 +132,13 @@ function Get-BigFiles {
         Select-Object -First $Top FullName, @{n='MB';e={ [math]::Round($_.Length/1MB,2) }}
 }
 
-function New-TempDirectory {
-    $directory = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
-    New-Item -ItemType Directory -Path $directory | Out-Null
-    Set-Location $directory
-    $directory
-}
-
-function Show-ProcessMatch {
-    param([Parameter(Mandatory)][string]$Name)
-    Get-Process | Where-Object ProcessName -Match $Name
-}
-
-function Get-SystemInfo {
-    Get-ComputerInfo -Property OsName, OsVersion, CsName, OsUptime -ErrorAction SilentlyContinue
-    Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free
-}
-
-function Get-Weather {
-    param([string]$Location = "")
-    if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
-        throw 'curl is required for weather.'
-    }
-    curl.exe -fsSL "https://wttr.in/$Location?format=3"
-}
-
 function Backup-Item {
     param([Parameter(Mandatory)][string]$Path)
     $item = Get-Item -LiteralPath $Path -ErrorAction Stop
     $destination = "$($item.FullName).$(Get-Date -Format yyyyMMdd-HHmmss).bak"
     Copy-Item -LiteralPath $item.FullName -Destination $destination -Recurse
+    Write-Host "Backup created: $destination" -ForegroundColor Green
     $destination
-}
-
-function Invoke-DotfilesDoctor {
-    $failed = $false
-    Write-Host 'Dotfiles doctor'
-    foreach ($command in @('git', 'pwsh')) {
-        if (Get-Command $command -ErrorAction SilentlyContinue) {
-            Write-Host "OK   command: $command"
-        } else {
-            Write-Host "MISS command: $command"
-            $failed = $true
-        }
-    }
-    $profileLine = ". `"$PSScriptRoot\Microsoft.PowerShell_profile.ps1`""
-    if (Select-String -Path $PROFILE.CurrentUserAllHosts -SimpleMatch $profileLine -Quiet -ErrorAction SilentlyContinue) {
-        Write-Host 'OK   PowerShell startup'
-    } else {
-        Write-Host 'MISS PowerShell startup'
-        $failed = $true
-    }
-    if ($failed) { return 1 }
-    return 0
-}
-
-function Show-DotfilesHelp {
-        param([string]$OutputFile)
-        $manual = @'
-Dotfiles PowerShell manual
-
-Navigation
-    mkcd PATH                Create PATH and enter it
-    New-TempDirectory        Create a temporary directory and enter it
-    project-root             Print the current Git root
-    croot                   Change to the current Git root
-    up [N]                  Move up N directories
-
-Files and archives
-    Get-BigFiles [PATH] [N] Show the largest files
-    Show-Tree [PATH] [FILE] Print or save a directory tree
-    extract ARCHIVE         Extract supported archives
-    Backup-Item FILE        Create a timestamped copy
-    json FILE               Pretty-print JSON
-    venv [PATH]              Create and activate a Python virtualenv
-
-System and network
-    port PORT               Show a listening TCP port
-    killport PORT           Stop processes on a TCP port
-    Show-ProcessMatch NAME  Search running processes
-    Get-SystemInfo          Show OS, uptime, and disk details
-    Get-Weather [LOCATION]  Show current weather from wttr.in
-    serve [PATH] [PORT]     Start a local HTTP server
-
-Git and shell
-    gs gd gl ...            Git shortcuts
-    gclean-preview          Preview untracked-file deletion
-    gclean                  Delete untracked files and directories
-    Show-Path               Print PATH entries
-    reload                  Reload the current profile
-    Invoke-DotfilesDoctor   Check profile setup and required tools
-
-Optional tools
-    zoxide                  Smart directory jumping; use z and zi
-    direnv                  Load project environment files automatically
-    yazi                    Terminal file manager
-    bat, delta               File preview and readable Git diffs
-
-Installation
-    .\windows\install-packages.ps1 -Minimal
-    .\windows\install-packages.ps1
-    .\windows\install.ps1 -DryRun
-    Add -LogFile FILE to either installer to save its transcript.
-'@
-        if ($OutputFile) {
-                Set-Content -LiteralPath $OutputFile -Value $manual
-        } else {
-                $manual
-        }
 }
 
 function Show-Tree {
@@ -182,18 +175,10 @@ function Show-Tree {
     }
 }
 
-function killport {
-    param([Parameter(Mandatory)][int]$Port)
-    $connections = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-    if (-not $connections) { Write-Host "Nothing is listening on port $Port."; return }
-    $connections | Select-Object -ExpandProperty OwningProcess -Unique |
-        Stop-Process -Force
-    Write-Host "Stopped process(es) on port $Port."
-}
-
+# ---- Navigation & Git Workspace Helpers ----
 function project-root {
     $root = git rev-parse --show-toplevel 2>$null
-    if ($LASTEXITCODE -eq 0) { return $root }
+    if ($LASTEXITCODE -eq 0 -and $root) { return $root }
     (Get-Location).Path
 }
 
@@ -206,6 +191,15 @@ function up {
     Set-Location $path
 }
 
+function New-TempDirectory {
+    $directory = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
+    New-Item -ItemType Directory -Path $directory | Out-Null
+    Set-Location $directory
+    $directory
+}
+Set-Alias mktempdir New-TempDirectory
+
+# ---- Development Helpers ----
 function serve {
     param([string]$Path = ".", [int]$Port = 8000)
     if (Get-Command python -ErrorAction SilentlyContinue) {
@@ -231,7 +225,7 @@ function Show-Path {
 }
 
 function Edit-Profile {
-    & $env:EDITOR $PROFILE.CurrentUserAllHosts
+    & $env:EDITOR $PROFILE.CurrentUserCurrentHost
 }
 Set-Alias ep Edit-Profile
 
@@ -242,14 +236,33 @@ function Find-File {
 }
 Set-Alias ff Find-File
 
-function head {
-    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10)
-    Get-Content -Path $Path -Head $Lines
+function Reload-Profile {
+    $cacheDir = Join-Path $env:LOCALAPPDATA "dotfiles-cache"
+    if (Test-Path $cacheDir) {
+        Remove-Item -Path "$cacheDir\*" -Force -ErrorAction SilentlyContinue
+    }
+    . $PROFILE
+    Write-Host "PowerShell profile reloaded." -ForegroundColor Green
 }
+Set-Alias reload Reload-Profile
 
-function tail {
-    param([Parameter(Mandatory)][string]$Path, [int]$Lines = 10, [switch]$Follow)
-    Get-Content -Path $Path -Tail $Lines -Wait:$Follow
+# ---- System & Admin Helpers ----
+function admin {
+    $cwd = (Get-Location).ProviderPath
+    $shell = if (Get-Command pwsh.exe -ErrorAction SilentlyContinue) { 'pwsh.exe' } else { 'powershell.exe' }
+    $shellArgs = if ($args.Count -gt 0) { @('-NoExit', '-Command', ($args -join ' ')) } else { @('-NoExit') }
+
+    if (Get-Command wt.exe -ErrorAction SilentlyContinue) {
+        Start-Process wt.exe -Verb RunAs -ArgumentList (@('-d', "`"$cwd`"", $shell) + $shellArgs)
+    } else {
+        Start-Process $shell -Verb RunAs -WorkingDirectory $cwd -ArgumentList $shellArgs
+    }
+}
+Set-Alias su admin
+
+function flushdns {
+    Clear-DnsClientCache
+    Write-Host 'DNS client cache has been flushed.' -ForegroundColor Green
 }
 
 function uptime {
@@ -260,23 +273,91 @@ function uptime {
     }
 }
 
-function cpy { Set-Clipboard ($args -join ' ') }
-function pst { Get-Clipboard }
-
-function Show-ProfileHelp {
-    @'
-PowerShell profile commands:
-  ep                 Edit the current PowerShell profile
-  reload             Reload the profile
-  ff NAME [PATH]     Find files recursively by name
-    Show-Tree [PATH] [OUTPUT_FILE]
-    Show-DotfilesHelp [FILE]  Show or save the command manual
-    Invoke-DotfilesDoctor  Check the PowerShell setup
-  head FILE [N]      Show the first N lines
-  tail FILE [N]      Show the last N lines
-  uptime             Show system uptime
-  cpy TEXT           Copy text to the clipboard
-  pst                Read clipboard text
-'@ | Write-Host
+function sysinfo {
+    if (Get-Command fastfetch.exe -ErrorAction SilentlyContinue) {
+        fastfetch
+    } else {
+        Get-ComputerInfo -Property OsName, OsVersion, CsName, OsUptime -ErrorAction SilentlyContinue
+        Get-PSDrive -PSProvider FileSystem | Select-Object Name, Used, Free
+    }
 }
-Set-Alias profile-help Show-ProfileHelp
+
+function Get-Weather {
+    param([string]$Location = "")
+    if (-not (Get-Command curl.exe -ErrorAction SilentlyContinue)) {
+        throw 'curl is required for weather.'
+    }
+    curl.exe -fsSL "https://wttr.in/$Location?format=3"
+}
+Set-Alias weather Get-Weather
+
+function winutil {
+    & ([ScriptBlock]::Create((Invoke-RestMethod -Uri 'https://christitus.com/win'))) @args
+}
+
+function Update-PowerShell {
+    [CmdletBinding(SupportsShouldProcess)]
+    param()
+
+    if (-not (Get-Command winget.exe -ErrorAction SilentlyContinue)) {
+        Write-Warning 'winget is required to update PowerShell automatically.'
+        return
+    }
+
+    try {
+        $release = Invoke-RestMethod -Uri 'https://api.github.com/repos/PowerShell/PowerShell/releases/latest' -ErrorAction Stop
+        $currentVersion = [version]$PSVersionTable.PSVersion
+        $latestVersion = [version]($release.tag_name -replace '^v', '')
+
+        if ($currentVersion -ge $latestVersion) {
+            Write-Host "PowerShell $currentVersion is up to date." -ForegroundColor Green
+            return
+        }
+
+        if ($PSCmdlet.ShouldProcess("PowerShell $currentVersion", "Upgrade to $latestVersion")) {
+            winget upgrade --id Microsoft.PowerShell --exact --accept-source-agreements --accept-package-agreements
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host 'PowerShell updated. Restart your shell to use the new version.' -ForegroundColor Green
+            } else {
+                Write-Error "winget failed to update PowerShell. Exit code: $LASTEXITCODE"
+            }
+        }
+    } catch {
+        Write-Error "Failed to check PowerShell updates: $_"
+    }
+}
+
+function Invoke-DotfilesDoctor {
+    Write-Host "`n  Dotfiles Health Check" -ForegroundColor Cyan
+    Write-Host ("  " + ("=" * 50)) -ForegroundColor DarkGray
+
+    $tools = @('git', 'pwsh', 'bun', 'starship', 'zoxide', 'micro', 'fastfetch', 'winget')
+    foreach ($tool in $tools) {
+        $cmd = Get-Command "$tool.exe" -ErrorAction SilentlyContinue
+        if ($cmd) {
+            $ver = try { & $tool.exe --version 2>$null | Select-Object -First 1 } catch { "Found" }
+            Write-Host "  [ OK ] " -ForegroundColor Green -NoNewline
+            Write-Host ("{0,-12}" -f $tool) -ForegroundColor Yellow -NoNewline
+            Write-Host ": $($cmd.Source) ($ver)" -ForegroundColor DarkGray
+        } else {
+            Write-Host "  [MISS] " -ForegroundColor Red -NoNewline
+            Write-Host ("{0,-12}" -f $tool) -ForegroundColor Yellow -NoNewline
+            Write-Host ": Not found in PATH" -ForegroundColor DarkGray
+        }
+    }
+
+    # Profile Linkage Check
+    Write-Host "`n  Profile Configuration:" -ForegroundColor Cyan
+    $profileTarget = $PROFILE.CurrentUserCurrentHost
+    if (Test-Path -LiteralPath $profileTarget) {
+        $content = Get-Content -LiteralPath $profileTarget -Raw -ErrorAction SilentlyContinue
+        if ($content -match "Microsoft\.PowerShell_profile\.ps1") {
+            Write-Host "  [ OK ] Profile Loader active at: $profileTarget" -ForegroundColor Green
+        } else {
+            Write-Host "  [WARN] Profile exists but doesn't appear to source dotfiles: $profileTarget" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "  [MISS] Profile does not exist yet at: $profileTarget" -ForegroundColor Red
+    }
+    Write-Host ""
+}
