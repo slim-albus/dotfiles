@@ -3,10 +3,12 @@
 # ============================================================
 
 # ---- Optional Module Imports (Direct Fast-Paths) ----
-# Terminal-Icons
-$terminalIconsPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\Terminal-Icons'
-if (Test-Path -LiteralPath $terminalIconsPath) {
-    Import-Module Terminal-Icons -ErrorAction SilentlyContinue
+# Terminal-Icons (Can be bypassed with $env:DOTFILES_FAST_BOOT = '1' for sub-150ms startup)
+if ($global:IsInteractiveShell -and $env:DOTFILES_FAST_BOOT -ne '1') {
+    $terminalIconsPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\Terminal-Icons'
+    if (Test-Path -LiteralPath $terminalIconsPath) {
+        Import-Module Terminal-Icons -ErrorAction SilentlyContinue
+    }
 }
 
 # posh-git
@@ -24,9 +26,10 @@ if ($env:ChocolateyInstall) {
 }
 
 # ---- PSReadLine Modern Autocomplete & Keybindings ----
-# PSReadLine is built into PowerShell 7+
 if ($global:IsInteractiveShell) {
-    Import-Module PSReadLine -ErrorAction SilentlyContinue
+    if (-not (Get-Module -Name PSReadLine)) {
+        Import-Module PSReadLine -ErrorAction SilentlyContinue
+    }
 
     try {
         $psReadLineOptions = @{
