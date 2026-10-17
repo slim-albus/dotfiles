@@ -1,24 +1,63 @@
 # Main Bash entry point for the dotfiles repository.
+# Non-interactive guard: Exit immediately if not running interactively
+[[ $- == *i* ]] || return 0
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
+[[ -r "$DOTFILES_ROOT/linux/dots.sh" ]] && source "$DOTFILES_ROOT/linux/dots.sh"
 
-if command -v direnv >/dev/null 2>&1; then
-	eval "$(direnv hook bash)"
-fi
+# ---- Tool Initializers (Cached for Sub-10ms Startup) ----
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles"
+mkdir -p -- "$cache_dir"
 
 if command -v zoxide >/dev/null 2>&1; then
-	eval "$(zoxide init bash)"
+    zoxide_cache="$cache_dir/zoxide_init.bash"
+    zoxide_bin="$(command -v zoxide)"
+    if [[ ! -f "$zoxide_cache" || "$zoxide_bin" -nt "$zoxide_cache" ]]; then
+        zoxide init --cmd z bash > "$zoxide_cache" 2>/dev/null || true
+    fi
+    [[ -r "$zoxide_cache" ]] && source "$zoxide_cache"
 fi
 
-# Use the distribution-provided Bash completion definitions when available.
+if command -v direnv >/dev/null 2>&1; then
+    direnv_cache="$cache_dir/direnv_init.bash"
+    direnv_bin="$(command -v direnv)"
+    if [[ ! -f "$direnv_cache" || "$direnv_bin" -nt "$direnv_cache" ]]; then
+        direnv hook bash > "$direnv_cache" 2>/dev/null || true
+    fi
+    [[ -r "$direnv_cache" ]] && source "$direnv_cache"
+fi
+
+# ---- Bash Autocompletion & Readline Options ----
 if [[ -r /usr/share/bash-completion/bash_completion ]]; then
-	source /usr/share/bash-completion/bash_completion
+    source /usr/share/bash-completion/bash_completion
 elif [[ -r /etc/bash_completion ]]; then
-	source /etc/bash_completion
+    source /etc/bash_completion
+fi
+
+bind "set show-all-if-ambiguous on" 2>/dev/null || true
+bind "set completion-ignore-case on" 2>/dev/null || true
+bind "set menu-complete-display-prefix on" 2>/dev/null || true
+
+# ---- Bun Autocompletion ----
+if command -v bun >/dev/null 2>&1; then
+    _bun_completions() {
+        local cur prev subcommands
+        cur="${COMP_WORDS[COMP_CWORD]}"
+        prev="${COMP_WORDS[COMP_CWORD-1]}"
+        subcommands="add install remove update run test build dev init create pm upgrade outdated patch link unlink"
+        if (( COMP_CWORD == 1 )); then
+            COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
+        elif [[ "$prev" == "run" ]] && [[ -f package.json ]]; then
+            local scripts
+            scripts=$(sed -n -e '/"scripts": {/,/}/p' package.json 2>/dev/null | grep -o '"[^"]*":' | tr -d '":')
+            COMPREPLY=( $(compgen -W "$scripts" -- "$cur") )
+        fi
+    }
+    complete -F _bun_completions bun
 fi
 
 source "$DOTFILES_ROOT/linux/prompt.sh"

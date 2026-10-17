@@ -1,19 +1,21 @@
-# Keep interactive Zsh sessions aligned with the Bash configuration.
+# Main Zsh entry point for the dotfiles repository.
+# Non-interactive guard: Exit immediately if not running interactively
+[[ -o interactive ]] || return 0
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${(%):-%N}")/.." && pwd)"
 
-# Load Oh My Zsh plugins when the installer has provisioned them.
+# Load Oh My Zsh plugins when provisioned
 export ZSH="${ZSH:-$HOME/.oh-my-zsh}"
 if [[ -r "$ZSH/oh-my-zsh.sh" ]]; then
-	ZSH_THEME=""
-	plugins=(git zsh-autosuggestions zsh-autocomplete)
-	source "$ZSH/oh-my-zsh.sh"
+    ZSH_THEME=""
+    plugins=(git zsh-autosuggestions zsh-autocomplete)
+    source "$ZSH/oh-my-zsh.sh"
 fi
 
-# Keep the existing Bash history available in Zsh and persist new commands.
+# History configuration
 HISTFILE="${HISTFILE:-$HOME/.zsh_history}"
-HISTSIZE=10000
-SAVEHIST=10000
+HISTSIZE=15000
+SAVEHIST=15000
 setopt appendhistory
 setopt inc_append_history
 setopt share_history
@@ -22,23 +24,76 @@ setopt extended_history
 source "$DOTFILES_ROOT/linux/env.sh"
 source "$DOTFILES_ROOT/linux/aliases.sh"
 source "$DOTFILES_ROOT/linux/functions.sh"
+[[ -r "$DOTFILES_ROOT/linux/dots.sh" ]] && source "$DOTFILES_ROOT/linux/dots.sh"
 
-if command -v direnv >/dev/null 2>&1; then
-	eval "$(direnv hook zsh)"
-fi
+# ---- Tool Initializers (Cached for Sub-10ms Startup) ----
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/dotfiles"
+mkdir -p -- "$cache_dir"
 
 if command -v zoxide >/dev/null 2>&1; then
-	eval "$(zoxide init zsh)"
+    zoxide_cache="$cache_dir/zoxide_init.zsh"
+    zoxide_bin="$(command -v zoxide)"
+    if [[ ! -f "$zoxide_cache" || "$zoxide_bin" -nt "$zoxide_cache" ]]; then
+        zoxide init --cmd z zsh > "$zoxide_cache" 2>/dev/null || true
+    fi
+    [[ -r "$zoxide_cache" ]] && source "$zoxide_cache"
 fi
 
-# Enable Zsh's built-in completion system with a per-user cache.
+if command -v direnv >/dev/null 2>&1; then
+    direnv_cache="$cache_dir/direnv_init.zsh"
+    direnv_bin="$(command -v direnv)"
+    if [[ ! -f "$direnv_cache" || "$direnv_bin" -nt "$direnv_cache" ]]; then
+        direnv hook zsh > "$direnv_cache" 2>/dev/null || true
+    fi
+    [[ -r "$direnv_cache" ]] && source "$direnv_cache"
+fi
+
+# ---- High-performance Zsh Completion System ----
 autoload -Uz compinit
 zstyle ':completion:*' menu select
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
-zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*'
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' use-cache on
 zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 mkdir -p -- "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
-compinit -d "${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
+
+# Fast compinit: only re-index completions once every 24 hours, use bytecode .zwc
+local zcompdump="${XDG_CACHE_HOME:-$HOME/.cache}/zsh/zcompdump"
+if [[ -s "$zcompdump" && (! -f "$zcompdump.zwc" || "$zcompdump" -nt "$zcompdump.zwc") ]]; then
+    compinit -C -d "$zcompdump"
+    { zcompile "$zcompdump" 2>/dev/null } &!
+else
+    compinit -C -d "$zcompdump"
+fi
+
+# ---- Bun Autocompletion for Zsh ----
+if command -v bun >/dev/null 2>&1; then
+    _bun() {
+        local -a subcommands
+        subcommands=(
+            'add:Add a package to dependencies'
+            'install:Install dependencies from package.json'
+            'remove:Remove a package from dependencies'
+            'update:Update installed dependencies'
+            'run:Run a package.json script or executable'
+            'test:Run unit and integration tests'
+            'build:Bundle TypeScript or JavaScript projects'
+            'dev:Start a local development server'
+            'init:Initialize an empty directory into a project'
+            'create:Create a new project from a template'
+            'pm:Package manager utilities'
+            'upgrade:Upgrade Bun to the latest version'
+            'outdated:Display outdated packages'
+        )
+        if (( CURRENT == 2 )); then
+            _describe 'command' subcommands
+        elif (( CURRENT == 3 )) && [[ "$words[2]" == "run" ]] && [[ -f package.json ]]; then
+            local -a scripts
+            scripts=(${(f)"$(sed -n -e '/"scripts": {/,/}/p' package.json 2>/dev/null | grep -o '"[^"]*":' | tr -d '":')"})
+            _describe 'script' scripts
+        fi
+    }
+    compdef _bun bun
+fi
 
 source "$DOTFILES_ROOT/linux/prompt.sh"
