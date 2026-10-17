@@ -27,14 +27,18 @@ Use `./install-packages.sh --minimal` for the essential shell baseline, or
 Read the complete feature and configuration reference in
 [docs/usage.md](docs/usage.md).
 
+Type `dots` (or `cheat`) in PowerShell anytime for your instant interactive
+command reference, or `dots doctor` to check your environment health.
+
 The default terminal editor is `micro`. Docker shortcuts, directory tree
-helpers, monitoring tools, and all shell commands are listed in the full
-reference.
+helpers, monitoring tools (`fastfetch`), and all shell commands are listed
+in the full reference.
 
 ## Structure
 
 - `linux/`: Bash and Zsh startup modules
-- `windows/`: PowerShell modules and installers
-- `shared/`: Starship, Git, and tmux configuration
+- `windows/`: PowerShell modules, `dots` manual, and visual installers
+- `wsl/`: WSL system configuration (`.wslconfig`)
+- `shared/`: Starship, Fastfetch, Git, Micro, and tmux configuration
 - `packages/`: apt, dnf, and Winget package lists
 - `.editorconfig` and `.gitattributes`: repository-wide file standards

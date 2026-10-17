@@ -1,0 +1,14 @@
+{
+    "autosu": true,
+    "colorscheme": "simple",
+    "cursorline": true,
+    "diffgutter": true,
+    "keepautoindent": true,
+    "matchbrace": true,
+    "rmtrailingws": true,
+    "savecursor": true,
+    "saveundo": true,
+    "scrollbar": true,
+    "tabsize": 4,
+    "tabstospaces": true
+}

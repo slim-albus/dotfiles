@@ -51,26 +51,30 @@ that backup name already exists.
 
 ### Windows PowerShell
 
-`windows/install-packages.ps1` installs the exact IDs in
-`packages/winget.txt`:
+`windows/install-packages.ps1` installs packages from `packages/winget.txt` with
+pre-flight binary checks, visual colored progress indicators (`[ OK ]`, `[SKIP]`, `[FAIL]`),
+error resilience (continues installing even if an optional tool fails), and a final summary:
 
 ```powershell
 .\windows\install-packages.ps1
 .\windows\install-packages.ps1 -Minimal
+.\windows\install-packages.ps1 -DryRun
 ```
 
-`windows/install.ps1` registers the repository profile in the current user's
-`CurrentUserAllHosts` profile and configures shared Git settings when Git is
-installed:
+`windows/install.ps1` safely configures your environment:
+1. Detects `$PROFILE.CurrentUserCurrentHost` (including Chris Titus Tech CTT profile),
+   creates a timestamped backup (`.ctt-backup.<timestamp>`), and installs a clean single-source loader.
+2. Configures Git shared settings (`shared/git/config`) and global ignore (`shared/git/ignore`).
+3. Syncs WSL configuration (`wsl/.wslconfig` to `$HOME\.wslconfig`).
+4. Runs automated health verification (`Invoke-DotfilesDoctor`):
 
 ```powershell
 .\windows\install.ps1
+.\windows\install.ps1 -DryRun
+.\windows\install.ps1 -TrackWsl
 ```
 
-Use `-DryRun` with either script to preview the actions. Winget comes from
-Microsoft App Installer. Use `-Minimal` for Git and micro only, or `-LogFile`
-to capture an installation transcript. The scripts do not require
-administrator access for profile configuration.
+Pass `-LogFile FILE` to either installer to write an execution transcript.
 
 ## Package Manifests
 
@@ -135,24 +139,42 @@ Reload a Unix shell with `reload`. Reload PowerShell with `reload` as well.
 
 PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
 
-PowerShell also provides `ep`/`Edit-Profile`, `ff`/`Find-File`, `head`,
-`tail`, `uptime`, `cpy`, `pst`, and `profile-help`.
+### Interactive Manual & Cheat Sheet (`dots`)
 
-Additional workflow helpers include `mktempdir`/`New-TempDirectory`,
-`psg`/`Show-ProcessMatch`, `sysinfo`/`Get-SystemInfo`,
-`weather`/`Get-Weather`, `backup`/`Backup-Item`, and `doctor`/
-`Invoke-DotfilesDoctor`. `gclean` previews untracked-file deletion on Unix;
-use `gclean-force` when deletion is intentional. PowerShell provides
-`gclean-preview` for the same preview behavior.
+Run `dots` (or `cheat`) in PowerShell anytime to open the interactive command reference:
 
-Zsh history uses `~/.zsh_history`. Run `history-import-bash` to load
-`~/.bash_history` into the current Zsh session and save it to the Zsh history
-file. Start a fresh shell with `exec zsh` after changing history configuration.
+```powershell
+dots                   # View full categorized cheat sheet
+dots git               # Filter Git shortcuts
+dots nav               # Filter navigation shortcuts
+dots sys               # Filter system and Windows tools
+dots keys              # View autocomplete keybindings
+dots find <term>       # Search across all commands and descriptions
+dots doctor            # Run environment diagnostics and tool health check
+dots update            # Pull latest dotfiles and refresh cache
+```
 
-For a printable command reference, run `dotfiles-help` on Unix or
-`Show-DotfilesHelp` in PowerShell. Pass a filename to either command to save a
-plain-text manual, for example `dotfiles-help dotfiles-manual.txt` or
-`Show-DotfilesHelp -OutputFile dotfiles-manual.txt`.
+### Autocomplete & Predictive IntelliSense
+PowerShell uses PSReadLine 2.4.5 configured for seamless editing:
+- **`InlineView` ghost text**: Suggestions appear inline as you type, without prompt jumping.
+- **`F2`**: Toggle between `InlineView` and `ListView` (multi-line dropdown) instantly.
+- **`RightArrow`**: Accept the entire suggested command at the end of the line.
+- **`Ctrl+f`**: Accept the next word of the suggestion.
+- **`Tab`**: Interactive `MenuComplete` (cycles through parameter and file candidates).
+- **`Up / Down Arrow`**: History search matching what you have already typed.
+- **`bun` Autocomplete**: Subcommands and dynamic npm script auto-completion from `package.json`.
+
+### Extended Utilities (Incorporated from CTT Profile)
+- `trash <path>`: Safely moves files or directories to the Windows Recycle Bin (via Shell COM API).
+- `admin` (or `su`): Elevates current directory in Windows Terminal or standalone PowerShell.
+- `sysinfo`: Displays system hardware, OS, kernel, uptime, and memory via `fastfetch`.
+- `flushdns`: Flushes Windows DNS client resolver cache.
+- `winutil`: Launches Chris Titus Tech Windows Utility.
+- `df`: Shows volume and drive space (`Get-Volume`).
+- `k9 <name>` / `pkill <name>`: Terminates processes by name.
+- `gcom <msg>`: Shorthand for `git add . && git commit -m <msg>`.
+- `lazyg <msg>`: Shorthand for `git add . && git commit -m <msg> && git push`.
+- `cpy <text>` / `pst`: Clipboard copy and paste shortcuts.
 
 #### Directory trees
 

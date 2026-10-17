@@ -274,7 +274,10 @@ function uptime {
 }
 
 function sysinfo {
-    if (Get-Command fastfetch.exe -ErrorAction SilentlyContinue) {
+    $ffConfig = Join-Path $global:DotfilesRoot "shared\fastfetch\config.jsonc"
+    if ((Get-Command fastfetch.exe -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $ffConfig)) {
+        fastfetch -c $ffConfig
+    } elseif (Get-Command fastfetch.exe -ErrorAction SilentlyContinue) {
         fastfetch
     } else {
         Get-ComputerInfo -Property OsName, OsVersion, CsName, OsUptime -ErrorAction SilentlyContinue
