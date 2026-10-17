@@ -38,26 +38,67 @@ elif [[ -r /etc/bash_completion ]]; then
     source /etc/bash_completion
 fi
 
-bind "set show-all-if-ambiguous on" 2>/dev/null || true
-bind "set completion-ignore-case on" 2>/dev/null || true
-bind "set menu-complete-display-prefix on" 2>/dev/null || true
-
-# ---- Bun Autocompletion ----
-if command -v bun >/dev/null 2>&1; then
-    _bun_completions() {
-        local cur prev subcommands
-        cur="${COMP_WORDS[COMP_CWORD]}"
-        prev="${COMP_WORDS[COMP_CWORD-1]}"
-        subcommands="add install remove update run test build dev init create pm upgrade outdated patch link unlink"
-        if (( COMP_CWORD == 1 )); then
-            COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
-        elif [[ "$prev" == "run" ]] && [[ -f package.json ]]; then
-            local scripts
-            scripts=$(sed -n -e '/"scripts": {/,/}/p' package.json 2>/dev/null | grep -o '"[^"]*":' | tr -d '":')
-            COMPREPLY=( $(compgen -W "$scripts" -- "$cur") )
-        fi
-    }
-    complete -F _bun_completions bun
+# Load Git completion explicitly (fixes fzf overriding git completion)
+if [[ -r /usr/share/bash-completion/completions/git ]]; then
+    source /usr/share/bash-completion/completions/git
+elif [[ -r /etc/bash_completion.d/git ]]; then
+    source /etc/bash_completion.d/git
 fi
 
+# Register Git shortcuts completion for Bash
+if declare -F __git_complete >/dev/null 2>&1; then
+    __git_complete gco _git_checkout
+    __git_complete gsw _git_switch
+    __git_complete gb _git_branch
+    __git_complete ga _git_add
+    __git_complete gc _git_commit
+    __git_complete gp _git_push
+    __git_complete gpull _git_pull
+    __git_complete gd _git_diff
+    __git_complete gl _git_log
+    __git_complete gcp _git_cherry_pick
+fi
+
+# ---- Dots Manual Autocompletion ----
+_dots_completions() {
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local commands="doctor update find search nav files git docker dev sys keys"
+    COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
+}
+complete -F _dots_completions dots cheat dotfiles
+
+# ---- Bun Autocompletion ----
+_bun_completions() {
+    local cur prev subcommands
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    subcommands="add install remove update run test build dev init create pm upgrade outdated patch link unlink"
+    if (( COMP_CWORD == 1 )); then
+        COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
+    elif [[ "$prev" == "run" ]] && [[ -f package.json ]]; then
+        local scripts
+        scripts=$(sed -n -e '/"scripts": {/,/}/p' package.json 2>/dev/null | grep -o '"[^"]*":' | tr -d '":')
+        COMPREPLY=( $(compgen -W "$scripts" -- "$cur") )
+    fi
+}
+complete -F _bun_completions bun
+
+# ---- Readline Autocomplete & Interactive Menu ----
+bind "set show-all-if-ambiguous on" 2>/dev/null || true
+bind "set show-all-if-unmodified on" 2>/dev/null || true
+bind "set completion-ignore-case on" 2>/dev/null || true
+bind "set menu-complete-display-prefix on" 2>/dev/null || true
+bind "set colored-stats on" 2>/dev/null || true
+bind "set colored-completion-prefix on" 2>/dev/null || true
+bind "set mark-symlinked-directories on" 2>/dev/null || true
+
+# Cycle completions on Tab, Shift-Tab to go backward
+bind 'TAB: menu-complete' 2>/dev/null || true
+bind '"\e[Z": menu-complete-backward' 2>/dev/null || true
+
+# Up/Down arrow history search matching currently typed prefix
+bind '"\e[A": history-search-backward' 2>/dev/null || true
+bind '"\e[B": history-search-forward' 2>/dev/null || true
+
 source "$DOTFILES_ROOT/linux/prompt.sh"
+

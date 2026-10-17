@@ -1,0 +1,30 @@
+# ============================================================
+# GNU Readline Configuration (.inputrc)
+# ============================================================
+$include /etc/inputrc
+
+# Case-insensitive tab completion
+set completion-ignore-case on
+
+# Show all completions immediately on ambiguous prefix
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+
+# Colored completion listing matching LS_COLORS
+set colored-stats on
+set colored-completion-prefix on
+
+# Append indicator for symlinks / directories
+set mark-symlinked-directories on
+set visible-stats on
+
+# Keep common prefix visible when cycling
+set menu-complete-display-prefix on
+
+# Cycle completions on Tab, Shift-Tab to go backward
+"\t": menu-complete
+"\e[Z": menu-complete-backward
+
+# Up / Down arrow history search by prefix
+"\e[A": history-search-backward
+"\e[B": history-search-forward

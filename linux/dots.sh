@@ -91,10 +91,12 @@ dots() {
         "sys|weather [loc]|Query live weather from wttr.in"
         "sys|cpy / pst|Copy or paste clipboard text (wl-copy, xclip, clip.exe)"
         "sys|df|Show disk volume usage in human-readable format"
-        "keys|Tab|Interactive completion menu (cycles through options)"
-        "keys|Ctrl+r|History reverse search (or fzf history if installed)"
-        "keys|Ctrl+w|Delete previous word on command line"
-        "keys|Ctrl+u|Clear entire line before cursor"
+        "keys|Tab / Shift+Tab|Interactive completion menu (cycles forward / backward)"
+        "keys|Up / Down Arrow|History search matching current typed prefix"
+        "keys|Ctrl+f / Right |Accept autosuggestion word / line (Zsh)"
+        "keys|Ctrl+r         |History reverse search (or fzf history if installed)"
+        "keys|Ctrl+w         |Delete previous word on command line"
+        "keys|Ctrl+u         |Clear entire line before cursor"
         "keys|Ctrl+a / Ctrl+e|Move to beginning / end of command line"
     )
 

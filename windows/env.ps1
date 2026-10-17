@@ -64,6 +64,19 @@ if ($zoxideBin) {
 # Direnv initialization
 $direnvBin = Get-Command direnv.exe -ErrorAction SilentlyContinue
 if ($direnvBin) {
+    # Ensure standard config directory exists so direnv does not error
+    $xdgConfig = Join-Path $env:USERPROFILE ".config"
+    if (-not (Test-Path -LiteralPath $xdgConfig)) {
+        New-Item -ItemType Directory -Path $xdgConfig -Force | Out-Null
+    }
+    if (-not $env:XDG_CONFIG_HOME) { $env:XDG_CONFIG_HOME = $xdgConfig }
+
+    $direnvConfigDir = Join-Path $xdgConfig "direnv"
+    if (-not (Test-Path -LiteralPath $direnvConfigDir)) {
+        New-Item -ItemType Directory -Path $direnvConfigDir -Force | Out-Null
+    }
+    if (-not $env:DIRENV_CONFIG) { $env:DIRENV_CONFIG = $direnvConfigDir }
+
     $direnvCache = Join-Path $cacheDir "direnv_init.ps1"
     $needGen = $true
     if (Test-Path -LiteralPath $direnvCache) {
@@ -75,7 +88,7 @@ if ($direnvBin) {
     }
     if ($needGen) {
         try {
-            & $direnvBin.Source hook pwsh | Out-File -FilePath $direnvCache -Encoding utf8
+            & $direnvBin.Source hook pwsh 2>$null | Out-File -FilePath $direnvCache -Encoding utf8
         } catch {}
     }
     if (Test-Path -LiteralPath $direnvCache) {

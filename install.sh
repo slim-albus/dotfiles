@@ -163,6 +163,7 @@ link_config_file "$DOTFILES_ROOT/shared/git/ignore" "$config_dir/git/ignore" "Gi
 link_config_file "$DOTFILES_ROOT/shared/tmux/tmux.conf" "$config_dir/tmux/tmux.conf" "tmux Config"
 link_config_file "$DOTFILES_ROOT/shared/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc" "Fastfetch Config"
 link_config_file "$DOTFILES_ROOT/shared/micro/settings.json" "$config_dir/micro/settings.json" "Micro Editor Config"
+link_config_file "$DOTFILES_ROOT/shared/inputrc" "$HOME/.inputrc" "Readline Config"
 
 # ------------------------------------------------------------
 # Step 3: Setup Oh My Zsh & Shell Plugins
@@ -198,7 +199,7 @@ if command -v zsh >/dev/null 2>&1; then
 
     clone_or_skip "https://github.com/ohmyzsh/ohmyzsh.git" "$oh_my_zsh_dir" "Oh My Zsh"
     clone_or_skip "https://github.com/zsh-users/zsh-autosuggestions.git" "$custom_dir/plugins/zsh-autosuggestions" "zsh-autosuggestions"
-    clone_or_skip "https://github.com/marlonrichert/zsh-autocomplete.git" "$custom_dir/plugins/zsh-autocomplete" "zsh-autocomplete"
+    clone_or_skip "https://github.com/zsh-users/zsh-syntax-highlighting.git" "$custom_dir/plugins/zsh-syntax-highlighting" "zsh-syntax-highlighting"
 else
     status_info "Zsh is not installed; skipping Oh My Zsh setup"
 fi

@@ -307,6 +307,7 @@ doctor() {
         "tmux.conf:$config_dir/tmux/tmux.conf:$root/shared/tmux/tmux.conf"
         "fastfetch:$config_dir/fastfetch/config.jsonc:$root/shared/fastfetch/config.jsonc"
         "micro:$config_dir/micro/settings.json:$root/shared/micro/settings.json"
+        "inputrc:$HOME/.inputrc:$root/shared/inputrc"
     )
 
     local name="" rest="" target="" source="" current_dest=""

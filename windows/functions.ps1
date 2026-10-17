@@ -241,6 +241,11 @@ function Reload-Profile {
     if (Test-Path $cacheDir) {
         Remove-Item -Path "$cacheDir\*" -Force -ErrorAction SilentlyContinue
     }
+    $direnvDir = Join-Path $env:USERPROFILE ".config\direnv"
+    if (-not (Test-Path -LiteralPath $direnvDir)) {
+        New-Item -ItemType Directory -Path $direnvDir -Force | Out-Null
+    }
+    $env:DIRENV_CONFIG = $direnvDir
     . $PROFILE
     Write-Host "PowerShell profile reloaded." -ForegroundColor Green
 }
