@@ -8,46 +8,36 @@ This document is the detailed reference for the repository. The root
 ### Linux and WSL
 
 `install-packages.sh` detects `apt` or `dnf`, reads the matching manifest, and
-installs packages with `sudo`. `git` is required for the setup scripts and is
-checked before installation; optional convenience packages are attempted
-individually and skipped if unavailable.
+installs packages with `sudo`. It performs pre-flight package checks (`dpkg`/`rpm`)
+to skip already installed packages rapidly, prints colored progress badges (`[ OK ]`, `[SKIP]`, `[FAIL]`),
+and continues past optional package failures:
 
 ```bash
 ./install-packages.sh
 ./install-packages.sh --minimal
+./install-packages.sh --dry-run
 ```
 
 `install.sh` installs user configuration without requiring root:
 
 ```bash
 ./install.sh
-```
-
-Before changing any files, `install.sh` verifies the core tool it needs for
-optional Oh My Zsh setup: `git`. The remaining manifest packages are optional
-interactive conveniences and do not block configuration installation. Debian's
-`fd-find` command is available as `fdfind`; Fedora's is available as `fd`.
-
-Preview either operation first:
-
-```bash
-./install-packages.sh --dry-run
 ./install.sh --dry-run
 ./install.sh --log "$HOME/.local/state/dotfiles-install.log"
 ```
 
-Use `--minimal` to install only `git`, `zsh`, `curl`, and `micro`. The default
-is `--full`, which attempts the optional tools in the selected manifest. Pass
-`--log FILE` to either installer to append its output to a log file.
+The installer verifies `git` and `bash`, then links shared configuration files into
+`${XDG_CONFIG_HOME:-$HOME/.config}`:
+- `starship.toml`
+- `git/config`
+- `git/ignore`
+- `tmux/tmux.conf`
+- `fastfetch/config.jsonc`
+- `micro/settings.json`
 
-The configuration installer links Starship, Git, Git's global ignore file, and
-tmux into `${XDG_CONFIG_HOME:-$HOME/.config}`. It always configures `~/.bashrc`
-and configures `~/.zshrc` plus Oh My Zsh when Zsh is installed. It also
-installs `zsh-autosuggestions` and `zsh-autocomplete` into `~/.oh-my-zsh` when
-Git is available. Existing Oh My Zsh installations and plugin directories are
-left untouched.
-Existing link targets are moved to `.dotfiles-backup`; a timestamp is added if
-that backup name already exists.
+Existing target files are backed up to `.dotfiles-backup.<timestamp>` before being replaced.
+It configures `~/.bashrc` and `~/.zshrc`, provisions Oh My Zsh with `zsh-autosuggestions`
+and `zsh-autocomplete` when Zsh and Git are available, and runs an automated doctor check.
 
 ### Windows PowerShell
 
