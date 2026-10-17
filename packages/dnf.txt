@@ -25,3 +25,4 @@ p7zip
 p7zip-plugins
 unrar
 zstd
+fastfetch

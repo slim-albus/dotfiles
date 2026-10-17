@@ -24,3 +24,4 @@ direnv
 p7zip-full
 unrar
 zstd
+fastfetch

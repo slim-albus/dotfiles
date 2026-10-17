@@ -287,9 +287,10 @@ doctor() {
     printf '  ==================================================\n'
 
     local tools=(git bash zsh bun starship zoxide micro fastfetch)
+    local bin_path=""
     for tool in "${tools[@]}"; do
         if command -v "$tool" >/dev/null 2>&1; then
-            local bin_path; bin_path="$(command -v "$tool")"
+            bin_path="$(command -v "$tool")"
             printf '  [ OK ] %-12s : %s\n' "$tool" "$bin_path"
         else
             printf '  [MISS] %-12s : Not found in PATH\n' "$tool"
