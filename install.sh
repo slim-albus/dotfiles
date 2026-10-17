@@ -5,6 +5,7 @@
 set -euo pipefail
 
 DOTFILES_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+export DOTFILES_ROOT
 DRY_RUN=0
 FORCE=0
 LOG_FILE=''
@@ -133,18 +134,23 @@ link_config_file() {
 
     mkdir -p -- "$(dirname -- "$target")"
 
-    if [[ -e "$target" || -L "$target" ]]; then
+    if [[ -L "$target" ]]; then
         if [[ "$target" -ef "$source" ]] && (( ! FORCE )); then
             status_skip "Already linked: $name"
             return 0
         fi
-
-        # Backup existing target
+        # Target is an existing symlink pointing to an old or different path; update cleanly
+        rm -f -- "$target"
+        ln -s "$source" "$target"
+        status_ok "Updated link: $name -> $target"
+        return 0
+    elif [[ -e "$target" ]]; then
+        # Backup existing non-symlink target to preserve user files
         local timestamp
         timestamp="$(date +%Y%m%d%H%M%S)"
         local backup="${target}.dotfiles-backup.${timestamp}"
         mv -f -- "$target" "$backup"
-        status_info "Backed up existing $name to $backup"
+        status_info "Backed up existing non-symlink $name to $backup"
     fi
 
     ln -s "$source" "$target"
@@ -202,6 +208,7 @@ register_startup() {
     local file="$1"
     local entry="$2"
     local name="$3"
+    local shell_pattern="$4"
 
     if (( DRY_RUN )); then
         status_dryrun "Register startup line in $file"
@@ -209,17 +216,44 @@ register_startup() {
     fi
 
     touch "$file"
-    if grep -Fqx "$entry" "$file" 2>/dev/null; then
+
+    local matches
+    matches="$(grep -c "$shell_pattern" "$file" 2>/dev/null || true)"
+    if (( matches == 1 )) && grep -Fqx "$entry" "$file" 2>/dev/null; then
         status_skip "Startup line already present in $name"
-    else
-        printf '\n# dotfiles: load shell configuration\n%s\n' "$entry" >> "$file"
-        status_ok "Added startup line to $name"
+        return 0
     fi
+
+    # Clean up duplicate or stale dotfiles loaders
+    local tmp_file
+    tmp_file="$(mktemp)"
+    awk -v pat="$shell_pattern" '
+        BEGIN { skip_next = 0 }
+        /# dotfiles: load shell configuration/ { skip_next = 1; next }
+        $0 ~ pat { skip_next = 0; next }
+        {
+            if (skip_next) {
+                print "# dotfiles: load shell configuration"
+                skip_next = 0
+            }
+            print
+        }
+        END {
+            if (skip_next) {
+                print "# dotfiles: load shell configuration"
+            }
+        }
+    ' "$file" > "$tmp_file"
+
+    # Append single canonical dotfiles entry
+    printf '\n# dotfiles: load shell configuration\n%s\n' "$entry" >> "$tmp_file"
+    mv -f -- "$tmp_file" "$file"
+    status_ok "Configured clean startup line in $name"
 }
 
-register_startup "$HOME/.bashrc" "source \"$DOTFILES_ROOT/linux/bashrc\"" "~/.bashrc"
+register_startup "$HOME/.bashrc" "source \"$DOTFILES_ROOT/linux/bashrc\"" "~/.bashrc" "linux/bashrc"
 if command -v zsh >/dev/null 2>&1; then
-    register_startup "$HOME/.zshrc" "source \"$DOTFILES_ROOT/linux/zshrc\"" "~/.zshrc"
+    register_startup "$HOME/.zshrc" "source \"$DOTFILES_ROOT/linux/zshrc\"" "~/.zshrc" "linux/zshrc"
 fi
 
 # ------------------------------------------------------------

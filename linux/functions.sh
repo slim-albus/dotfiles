@@ -285,7 +285,9 @@ doctor() {
 
     printf '\n  Dotfiles Health Check (Linux/Unix)\n'
     printf '  ==================================================\n'
+    printf '  Source Directory : %s\n' "$root"
 
+    printf '\n  Installed Tools:\n'
     local tools=(git bash zsh bun starship zoxide micro fastfetch)
     local bin_path=""
     for tool in "${tools[@]}"; do
@@ -307,16 +309,24 @@ doctor() {
         "micro:$config_dir/micro/settings.json:$root/shared/micro/settings.json"
     )
 
+    local name="" rest="" target="" source="" current_dest=""
     for entry in "${links[@]}"; do
-        local name="${entry%%:*}"
-        local rest="${entry#*:}"
-        local target="${rest%%:*}"
-        local source="${rest#*:}"
+        name="${entry%%:*}"
+        rest="${entry#*:}"
+        target="${rest%%:*}"
+        source="${rest#*:}"
 
-        if [[ -L "$target" && "$target" -ef "$source" ]]; then
-            printf '  [ OK ] %-16s : Linked -> %s\n' "$name" "$target"
+        if [[ -L "$target" ]]; then
+            current_dest="$(readlink -- "$target" 2>/dev/null || true)"
+            if [[ "$target" -ef "$source" ]]; then
+                printf '  [ OK ] %-16s : Linked -> %s\n' "$name" "$target"
+            else
+                printf '  [WARN] %-16s : Points to %s (expected %s)\n' "$name" "$current_dest" "$source"
+                failed=1
+            fi
         elif [[ -e "$target" ]]; then
-            printf '  [WARN] %-16s : File exists but not linked -> %s\n' "$name" "$target"
+            printf '  [WARN] %-16s : Regular file (not a symlink) -> %s\n' "$name" "$target"
+            failed=1
         else
             printf '  [MISS] %-16s : Missing link -> %s\n' "$name" "$target"
             failed=1
@@ -324,17 +334,35 @@ doctor() {
     done
 
     printf '\n  Shell Startup:\n'
-    if grep -Fqx "source \"$expected_source\"" "$HOME/.bashrc" 2>/dev/null; then
+    local bash_count
+    bash_count="$(grep -c 'linux/bashrc' "$HOME/.bashrc" 2>/dev/null || true)"
+    if (( bash_count == 1 )) && grep -Fqx "source \"$expected_source\"" "$HOME/.bashrc" 2>/dev/null; then
         printf '  [ OK ] Bash startup      : Configured in ~/.bashrc\n'
+    elif (( bash_count > 1 )); then
+        printf '  [WARN] Bash startup      : %d dotfiles loaders found in ~/.bashrc (run ./install.sh to clean duplicates)\n' "$bash_count"
+        failed=1
+    elif (( bash_count == 1 )); then
+        printf '  [WARN] Bash startup      : Configured in ~/.bashrc, but points to a different path than DOTFILES_ROOT\n'
+        failed=1
     else
         printf '  [MISS] Bash startup      : Not configured in ~/.bashrc\n'
+        failed=1
     fi
 
     if command -v zsh >/dev/null 2>&1; then
-        if grep -Fqx "source \"$expected_zsh_source\"" "$HOME/.zshrc" 2>/dev/null; then
+        local zsh_count
+        zsh_count="$(grep -c 'linux/zshrc' "$HOME/.zshrc" 2>/dev/null || true)"
+        if (( zsh_count == 1 )) && grep -Fqx "source \"$expected_zsh_source\"" "$HOME/.zshrc" 2>/dev/null; then
             printf '  [ OK ] Zsh startup       : Configured in ~/.zshrc\n'
+        elif (( zsh_count > 1 )); then
+            printf '  [WARN] Zsh startup       : %d dotfiles loaders found in ~/.zshrc (run ./install.sh to clean duplicates)\n' "$zsh_count"
+            failed=1
+        elif (( zsh_count == 1 )); then
+            printf '  [WARN] Zsh startup       : Configured in ~/.zshrc, but points to a different path than DOTFILES_ROOT\n'
+            failed=1
         else
             printf '  [MISS] Zsh startup       : Not configured in ~/.zshrc\n'
+            failed=1
         fi
     fi
     printf '\n'
