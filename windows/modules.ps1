@@ -5,16 +5,12 @@
 # ---- Optional Module Imports (Direct Fast-Paths) ----
 # Terminal-Icons (Can be bypassed with $env:DOTFILES_FAST_BOOT = '1' for sub-150ms startup)
 if ($global:IsInteractiveShell -and $env:DOTFILES_FAST_BOOT -ne '1') {
-    $terminalIconsPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\Terminal-Icons'
-    if (Test-Path -LiteralPath $terminalIconsPath) {
+    if (Get-Module -ListAvailable -Name Terminal-Icons) {
         Import-Module Terminal-Icons -ErrorAction SilentlyContinue
     }
-}
-
-# posh-git
-$poshGitPath = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerShell\Modules\posh-git'
-if (Test-Path -LiteralPath $poshGitPath) {
-    Import-Module posh-git -ErrorAction SilentlyContinue
+    if (Get-Module -ListAvailable -Name posh-git) {
+        Import-Module posh-git -ErrorAction SilentlyContinue
+    }
 }
 
 # Chocolatey tab-completion
@@ -81,7 +77,23 @@ if ($global:IsInteractiveShell) {
         # History Secret Scrubber
         Set-PSReadLineOption -AddToHistoryHandler {
             param([string]$line)
-            $line -notmatch '(?i)(password|secret|token|apikey|connectionstring|bearer\s+[a-z0-9_\-\.]+)'
+            $line -notmatch '(?i)(password|secret|token|apikey|connectionstring|bearer\s+[a-z0-9_\-\.]+|ghp_[a-zA-Z0-9]+|gho_[a-zA-Z0-9]+|github_pat_[a-zA-Z0-9_]+|AKIA[0-9A-Z]{16}|BEGIN\s+(RSA\s+)?PRIVATE\s+KEY)'
+        }
+
+        # FZF Interactive Integration
+        if (Get-Command fzf.exe -ErrorAction SilentlyContinue) {
+            $env:FZF_DEFAULT_OPTS = "--height 40% --layout=reverse --border --inline-info"
+            if (Get-Module -ListAvailable -Name PSFzf) {
+                Import-Module PSFzf -ErrorAction SilentlyContinue
+            } else {
+                # Lightweight Ctrl+T file selector keybinding
+                Set-PSReadLineKeyHandler -Chord 'Ctrl+t' -ScriptBlock {
+                    $selected = & fzf.exe
+                    if ($selected) {
+                        [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected)
+                    }
+                }
+            }
         }
     } catch {}
 }
@@ -137,6 +149,19 @@ if ($global:IsInteractiveShell) {
             } catch {}
         }
     }
+
+    # Git shortcuts branch autocompletion (gco, gsw, gb)
+    $gitBranchCompleter = {
+        param($wordToComplete, $commandAst, $cursorPosition)
+        try {
+            $branches = git branch --format="%(refname:short)" 2>$null
+            $branches | Where-Object { $_ -like "$wordToComplete*" } |
+                ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', "branch: $_") }
+        } catch {}
+    }
+    Register-ArgumentCompleter -CommandName gco -ScriptBlock $gitBranchCompleter
+    Register-ArgumentCompleter -CommandName gsw -ScriptBlock $gitBranchCompleter
+    Register-ArgumentCompleter -CommandName gb  -ScriptBlock $gitBranchCompleter
 
     # Winget argument completion
     Register-ArgumentCompleter -Native -CommandName winget -ScriptBlock {

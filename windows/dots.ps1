@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # dots — Interactive Dotfiles Manual & Cheat Sheet
 # ============================================================
 
@@ -20,8 +20,8 @@ function dots {
             Items = @(
                 @{ Cmd = ".. / ... / ...."; Desc = "Go up 1, 2, or 3 directories" }
                 @{ Cmd = "~";               Desc = "Go to user home directory ($HOME)" }
-                @{ Cmd = "croot";           Desc = "Change directory to current Git repository root" }
-                @{ Cmd = "project-root";    Desc = "Print the current Git root path" }
+                @{ Cmd = "croot / groot";   Desc = "Change directory to current Git repository root" }
+                @{ Cmd = "project_root";    Desc = "Print the current Git root path (or project-root)" }
                 @{ Cmd = "mkcd <path>";     Desc = "Create directory (including parents) and enter it" }
                 @{ Cmd = "up [n]";          Desc = "Move up N directory levels (defaults to 1)" }
                 @{ Cmd = "docs";            Desc = "Go to Documents directory" }
@@ -29,6 +29,7 @@ function dots {
                 @{ Cmd = "mktempdir";       Desc = "Create and enter a fresh random temporary directory" }
                 @{ Cmd = "z <query>";       Desc = "Smart directory jumping with zoxide" }
                 @{ Cmd = "zi <query>";      Desc = "Interactive fuzzy directory jumping" }
+                @{ Cmd = "y [path]";        Desc = "Launch Yazi and cd to selected directory on exit" }
             )
         }
         "files" = @{
@@ -36,16 +37,16 @@ function dots {
             Items = @(
                 @{ Cmd = "ll / l / la / ls"; Desc = "Enhanced directory listing (eza with icons or formatted)" }
                 @{ Cmd = "ff <name> [dir]";  Desc = "Find files recursively matching name filter" }
-                @{ Cmd = "Show-Tree [path]"; Desc = "Print hierarchical tree structure of directory" }
-                @{ Cmd = "Get-BigFiles [n]"; Desc = "List largest files in directory (defaults to top 20)" }
-                @{ Cmd = "extract <archive>"; Desc = "Extract zip archive into current folder" }
+                @{ Cmd = "treeview / Show-Tree"; Desc = "Print hierarchical tree structure of directory" }
+                @{ Cmd = "bigfiles [n]";     Desc = "List largest files in directory (Get-BigFiles)" }
+                @{ Cmd = "extract <archive>"; Desc = "Extract zip, tar, gz, 7z, bz2, xz archives" }
                 @{ Cmd = "trash <path>";     Desc = "Safely move file or directory to Windows Recycle Bin" }
                 @{ Cmd = "json <file>";      Desc = "Pretty-print formatted JSON with depth 100" }
                 @{ Cmd = "head <file> [n]";  Desc = "Show first N lines of file (defaults to 10)" }
                 @{ Cmd = "tail <file> [n]";  Desc = "Show last N lines of file (defaults to 10, -Wait supported)" }
                 @{ Cmd = "touch <file>";     Desc = "Create new file or update timestamp" }
                 @{ Cmd = "sed <f> <a> <b>";  Desc = "Find and replace text in file" }
-                @{ Cmd = "Backup-Item <f>";  Desc = "Create a timestamped backup copy (.bak)" }
+                @{ Cmd = "backup <f>";       Desc = "Create a timestamped backup copy (.bak)" }
             )
         }
         "git" = @{

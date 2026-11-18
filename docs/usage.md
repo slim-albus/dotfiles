@@ -36,8 +36,9 @@ The installer verifies `git` and `bash`, then links shared configuration files i
 - `micro/settings.json`
 
 Existing target files are backed up to `.dotfiles-backup.<timestamp>` before being replaced.
-It configures `~/.bashrc` and `~/.zshrc`, provisions Oh My Zsh with `zsh-autosuggestions`
-and `zsh-autocomplete` when Zsh and Git are available, and runs an automated doctor check.
+It automatically provisions **Fast Node Manager (`fnm`)** with the latest Current Node.js release
+and **Bun** in user space (no root or sudo required), configures `~/.bashrc` and `~/.zshrc`,
+provisions Oh My Zsh with plugins when Zsh and Git are available, and runs an automated doctor check.
 
 ### Windows PowerShell
 
@@ -117,17 +118,19 @@ Reload a Unix shell with `reload`. Reload PowerShell with `reload` as well.
 | `..`, `...`, `....` | Move up one, two, or three directories |
 | `up [N]` | Move up `N` directories |
 | `mkcd DIR` | Create a directory and enter it |
-| `project_root` | Print the Git root, or the current directory outside Git |
-| `croot` | Change to the current Git repository root |
+| `project_root` / `project-root` | Print the Git root, or the current directory outside Git |
+| `croot` / `groot` | Change to the current Git repository root |
+| `y [DIR]` | Launch Yazi file manager and change directory on exit |
+| `ff NAME [DIR]` | Find files recursively matching name |
 | `l`, `la`, `ll` | Directory listings, including hidden files for `la` and `ll` |
 | `cls` | Clear the terminal screen |
-| `bigfiles [DIR] [N]` | Show the largest entries; defaults to 20 |
-| `treeview [DIR] [FILE]` | Print a directory tree or save it to a text file |
-| `Show-Tree [PATH] [OUTPUT_FILE]` | Print a directory tree or save it to a text file |
-| `path` | Print PATH entries one per line |
-| `extract ARCHIVE` | Extract tar, zip, gzip, bzip2, and xz archives |
+| `bigfiles [DIR] [N]` | Show largest entries; defaults to 20 (`Get-BigFiles`) |
+| `treeview [DIR] [FILE]` | Print a directory tree or save to file (`Show-Tree`) |
+| `backup FILE` | Create a timestamped `.bak` copy (`Backup-Item`) |
+| `path` | Print PATH entries one per line (`Show-Path`) |
+| `extract ARCHIVE` | Extract tar, zip, gzip, bzip2, 7z, and xz archives |
 
-PowerShell equivalents include `Get-BigFiles` and `Show-Path`.
+All navigation, archive, and tree commands are aliased symmetrically across Linux and PowerShell.
 
 ### Interactive Manual & Cheat Sheet (`dots`)
 

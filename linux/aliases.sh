@@ -50,3 +50,20 @@ alias drm='docker rm'
 alias cls='clear'
 alias df='df -h'
 alias grep='grep --color=auto'
+
+# ---- Debian/Ubuntu Binary Fallbacks ----
+if ! command -v bat >/dev/null 2>&1 && command -v batcat >/dev/null 2>&1; then
+    alias bat='batcat'
+fi
+if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    alias fd='fdfind'
+fi
+
+# ---- Cross-Platform Parity Aliases ----
+alias project-root='project_root'
+alias Show-Tree='treeview'
+alias Backup-Item='backup'
+alias Get-BigFiles='bigfiles'
+alias Show-Path='path'
+alias pgrep='psg'
+alias ep='${EDITOR:-micro} "$HOME/.bashrc"'

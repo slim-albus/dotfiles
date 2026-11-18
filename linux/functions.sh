@@ -85,18 +85,45 @@ admin() {
 alias su='admin'
 
 trash() {
-    local target="${1:?Usage: trash PATH}"
-    [[ -e "$target" || -L "$target" ]] || { printf 'Not found: %s\n' "$target" >&2; return 1; }
-    if command -v trash-put >/dev/null 2>&1; then
-        trash-put "$target"
-    elif command -v gio >/dev/null 2>&1; then
-        gio trash "$target"
-    else
-        local trash_dir="${XDG_DATA_HOME:-$HOME/.local/share}/Trash/files"
-        mkdir -p -- "$trash_dir"
-        mv -- "$target" "$trash_dir/"
-        printf 'Moved to Trash: %s\n' "$trash_dir/$(basename -- "$target")"
+    if (( $# == 0 )); then
+        printf 'Usage: trash PATH...\n' >&2
+        return 1
     fi
+    for target in "$@"; do
+        [[ -e "$target" || -L "$target" ]] || { printf 'Not found: %s\n' "$target" >&2; continue; }
+        if command -v trash-put >/dev/null 2>&1; then
+            trash-put "$target"
+        elif command -v gio >/dev/null 2>&1; then
+            gio trash "$target"
+        else
+            local trash_dir="${XDG_DATA_HOME:-$HOME/.local/share}/Trash/files"
+            mkdir -p -- "$trash_dir"
+            mv -- "$target" "$trash_dir/"
+            printf 'Moved to Trash: %s\n' "$trash_dir/$(basename -- "$target")"
+        fi
+    done
+}
+
+ff() {
+    local name="${1:?Usage: ff NAME [DIR]}"
+    local dir="${2:-.}"
+    if command -v fd >/dev/null 2>&1; then
+        fd "$name" "$dir"
+    elif command -v fdfind >/dev/null 2>&1; then
+        fdfind "$name" "$dir"
+    else
+        find "$dir" -name "*$name*"
+    fi
+}
+
+y() {
+    local tmp
+    tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    yazi "$@" --cwd-file="$tmp"
+    if cwd="$(cat -- "$tmp" 2>/dev/null)" && [[ -n "$cwd" && "$cwd" != "$PWD" ]]; then
+        cd -- "$cwd"
+    fi
+    rm -f -- "$tmp"
 }
 
 sysinfo() {
@@ -288,7 +315,7 @@ doctor() {
     printf '  Source Directory : %s\n' "$root"
 
     printf '\n  Installed Tools:\n'
-    local tools=(git bash zsh bun starship zoxide micro fastfetch)
+    local tools=(git bash zsh node bun fnm starship zoxide micro fastfetch)
     local bin_path=""
     for tool in "${tools[@]}"; do
         if command -v "$tool" >/dev/null 2>&1; then

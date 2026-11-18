@@ -24,8 +24,8 @@ path_add() {
     esac
 }
 
-# Prepend modern tool paths (Bun first, then user locals)
-for path_entry in "$HOME/.bun/bin" "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/bin"; do
+# Prepend modern tool paths (Bun and Node/fnm first, then user locals)
+for path_entry in "$HOME/.bun/bin" "$HOME/.fnm" "$HOME/.local/share/fnm" "$HOME/.local/bin" "$HOME/.cargo/bin" "$HOME/go/bin" "$HOME/bin"; do
     [[ -d "$path_entry" ]] && path_add "$path_entry"
 done
 export PATH

@@ -16,3 +16,6 @@ ajeetdsouza.zoxide
 sharkdp.bat
 dandavison.delta
 direnv.direnv
+Fastfetch-cli.Fastfetch
+Oven-sh.Bun
+Schniz.fnm

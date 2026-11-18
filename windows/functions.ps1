@@ -48,11 +48,33 @@ function pgrep {
 # ---- File & Archive Helpers ----
 function extract {
     param([Parameter(Mandatory)][string]$Path)
-    if (-not (Test-Path $Path)) { Write-Error "Not found: $Path"; return }
-    $ext = [IO.Path]::GetExtension($Path).ToLower()
-    switch ($ext) {
-        '.zip' { Expand-Archive -Path $Path -DestinationPath (Split-Path $Path -Parent) -Force }
-        default { Write-Host "Unsupported archive type: $ext (use 7z or tar for other formats)" -ForegroundColor Yellow }
+    $resolved = Resolve-Path -LiteralPath $Path -ErrorAction SilentlyContinue
+    if (-not $resolved) { Write-Error "Not found: $Path"; return }
+    $fullPath = $resolved.ProviderPath
+    $parent = Split-Path $fullPath -Parent
+    $fileName = [IO.Path]::GetFileName($fullPath)
+
+    if ($fileName -match '\.(tar\.gz|tgz)$') {
+        & tar.exe -xzf $fullPath -C $parent
+    } elseif ($fileName -match '\.(tar\.bz2|tbz2)$') {
+        & tar.exe -xjf $fullPath -C $parent
+    } elseif ($fileName -match '\.(tar\.xz|txz)$') {
+        & tar.exe -xJf $fullPath -C $parent
+    } elseif ($fileName -match '\.tar$') {
+        & tar.exe -xf $fullPath -C $parent
+    } elseif ($fileName -match '\.zip$') {
+        Expand-Archive -LiteralPath $fullPath -DestinationPath $parent -Force
+    } elseif ($fileName -match '\.(7z|rar|gz|bz2|xz|zst)$') {
+        $sevenZip = Get-Command 7z.exe -ErrorAction SilentlyContinue
+        if ($sevenZip) {
+            & $sevenZip.Source x "-o$parent" $fullPath -y
+        } elseif (Get-Command tar.exe -ErrorAction SilentlyContinue) {
+            & tar.exe -xf $fullPath -C $parent
+        } else {
+            Write-Host "Please install 7-Zip (winget install 7zip.7zip) to extract $fileName" -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "Unsupported archive type: $fileName" -ForegroundColor Yellow
     }
 }
 
@@ -107,7 +129,10 @@ function sed {
         [Parameter(Mandatory)][string]$Find,
         [Parameter(Mandatory)][string]$Replace
     )
-    (Get-Content -LiteralPath $File).Replace($Find, $Replace) | Set-Content -LiteralPath $File
+    $resolved = Resolve-Path -LiteralPath $File -ErrorAction Stop
+    $raw = Get-Content -LiteralPath $resolved.ProviderPath -Raw
+    $updated = $raw.Replace($Find, $Replace)
+    [System.IO.File]::WriteAllText($resolved.ProviderPath, $updated, [System.Text.Encoding]::UTF8)
 }
 
 function which {
@@ -300,7 +325,12 @@ function Get-Weather {
 Set-Alias weather Get-Weather
 
 function winutil {
-    & ([ScriptBlock]::Create((Invoke-RestMethod -Uri 'https://christitus.com/win'))) @args
+    $confirm = Read-Host "Launch Chris Titus Tech Windows Utility from christitus.com/win? (y/N)"
+    if ($confirm -eq 'y' -or $confirm -eq 'Y') {
+        & ([ScriptBlock]::Create((Invoke-RestMethod -Uri 'https://christitus.com/win'))) @args
+    } else {
+        Write-Host "Cancelled." -ForegroundColor Yellow
+    }
 }
 
 function Update-PowerShell {
@@ -339,7 +369,7 @@ function Invoke-DotfilesDoctor {
     Write-Host "`n  Dotfiles Health Check" -ForegroundColor Cyan
     Write-Host ("  " + ("=" * 50)) -ForegroundColor DarkGray
 
-    $tools = @('git', 'pwsh', 'bun', 'starship', 'zoxide', 'micro', 'fastfetch', 'winget')
+    $tools = @('git', 'pwsh', 'node', 'bun', 'fnm', 'starship', 'zoxide', 'micro', 'fastfetch', 'winget')
     foreach ($tool in $tools) {
         $cmd = Get-Command "$tool.exe" -ErrorAction SilentlyContinue
         if ($cmd) {

@@ -16,8 +16,14 @@
     ui = auto
 [core]
     editor = micro
-    pager = cat
+    pager = delta
     excludesFile = ~/.config/git/ignore
-[user]
-	name = Slim_Albus
-	email = 122900291+slim-albus@users.noreply.github.com
+[interactive]
+    diffFilter = delta --color-only
+[delta]
+    navigate = true
+    light = false
+    line-numbers = true
+    side-by-side = false
+[include]
+    path = ~/.gitconfig.local

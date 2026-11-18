@@ -172,23 +172,26 @@ for ((idx=0; idx<total_count; idx++)); do
     fi
 
     status_info "$counter Installing $pkg ..."
+    err_output=""
     if [[ "$package_manager" == apt ]]; then
-        if sudo apt-get install -y "$pkg" >/dev/null 2>&1; then
+        if err_output="$(sudo apt-get install -y "$pkg" 2>&1 >/dev/null)"; then
             status_ok "$counter Successfully installed: $pkg"
             installed_count=$((installed_count + 1))
         else
             status_fail "$counter Failed to install: $pkg"
             failed_count=$((failed_count + 1))
             failed_packages+=("$pkg")
+            [[ -n "$err_output" ]] && printf "           %s\n" "$(printf '%s\n' "$err_output" | tail -n 2)"
         fi
     else
-        if sudo dnf install -y "$pkg" >/dev/null 2>&1; then
+        if err_output="$(sudo dnf install -y "$pkg" 2>&1 >/dev/null)"; then
             status_ok "$counter Successfully installed: $pkg"
             installed_count=$((installed_count + 1))
         else
             status_fail "$counter Failed to install: $pkg"
             failed_count=$((failed_count + 1))
             failed_packages+=("$pkg")
+            [[ -n "$err_output" ]] && printf "           %s\n" "$(printf '%s\n' "$err_output" | tail -n 2)"
         fi
     fi
 done

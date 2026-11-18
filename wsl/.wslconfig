@@ -3,4 +3,11 @@ instanceIdleTimeout=-1
 
 [wsl2]
 vmIdleTimeout=-1
+autoMemoryReclaim=gradual
+networkingMode=mirrored
+dnsTunneling=true
+autoProxy=true
+
+[experimental]
+sparseVhd=true
 

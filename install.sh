@@ -96,7 +96,7 @@ fi
 # ------------------------------------------------------------
 # Step 1: Verify Prerequisites
 # ------------------------------------------------------------
-step_header "Step [1/4]: Checking Prerequisites"
+step_header "Step [1/5]: Checking Prerequisites"
 
 missing_tools=()
 for tool in git bash; do
@@ -118,7 +118,7 @@ fi
 # ------------------------------------------------------------
 # Step 2: Link Configuration Files
 # ------------------------------------------------------------
-step_header "Step [2/4]: Linking Shared Configurations"
+step_header "Step [2/5]: Linking Shared Configurations"
 
 config_dir="${XDG_CONFIG_HOME:-$HOME/.config}"
 
@@ -166,9 +166,106 @@ link_config_file "$DOTFILES_ROOT/shared/micro/settings.json" "$config_dir/micro/
 link_config_file "$DOTFILES_ROOT/shared/inputrc" "$HOME/.inputrc" "Readline Config"
 
 # ------------------------------------------------------------
-# Step 3: Setup Oh My Zsh & Shell Plugins
+# Step 3: Runtime Environments (Node.js via fnm & Bun)
 # ------------------------------------------------------------
-step_header "Step [3/4]: Shell Environment & Plugins"
+step_header "Step [3/5]: Runtime Environments (Node.js & Bun)"
+
+# Setup latest Node.js via fnm (Fast Node Manager)
+install_fnm_and_node() {
+    local fnm_bin=""
+    for candidate in "$(command -v fnm 2>/dev/null)" "$HOME/.local/share/fnm/fnm" "$HOME/.fnm/fnm"; do
+        if [[ -n "$candidate" && -x "$candidate" ]]; then
+            fnm_bin="$candidate"
+            break
+        fi
+    done
+
+    if [[ -z "$fnm_bin" ]]; then
+        if (( DRY_RUN )); then
+            status_dryrun "Install fnm (Fast Node Manager) via official installer"
+        else
+            status_info "Installing fnm (Fast Node Manager)..."
+            if curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell >/dev/null 2>&1; then
+                for candidate in "$HOME/.local/share/fnm/fnm" "$HOME/.fnm/fnm"; do
+                    if [[ -x "$candidate" ]]; then
+                        fnm_bin="$candidate"
+                        break
+                    fi
+                done
+                status_ok "Installed fnm to $fnm_bin"
+            else
+                status_warn "Could not install fnm; skipping Node.js auto-setup"
+                return 0
+            fi
+        fi
+    else
+        status_skip "fnm is already installed at: $fnm_bin"
+    fi
+
+    if [[ -n "$fnm_bin" && -x "$fnm_bin" ]]; then
+        export PATH="$(dirname "$fnm_bin"):$PATH"
+        eval "$("$fnm_bin" env --shell bash 2>/dev/null || true)"
+
+        if (( DRY_RUN )); then
+            status_dryrun "fnm install --latest && fnm default latest"
+        else
+            status_info "Ensuring latest Node.js release via fnm..."
+            if "$fnm_bin" install --latest >/dev/null 2>&1; then
+                "$fnm_bin" default latest >/dev/null 2>&1 || true
+                eval "$("$fnm_bin" env --shell bash 2>/dev/null || true)"
+                local node_ver
+                node_ver="$(node -v 2>/dev/null || echo 'installed')"
+                status_ok "Latest Node.js active: $node_ver (managed via fnm)"
+            else
+                status_warn "fnm install --latest failed; skipping Node.js setup"
+            fi
+        fi
+    fi
+}
+
+# Setup Bun runtime
+install_bun() {
+    local bun_bin=""
+    for candidate in "$(command -v bun 2>/dev/null)" "$HOME/.bun/bin/bun"; do
+        if [[ -n "$candidate" && -x "$candidate" ]]; then
+            bun_bin="$candidate"
+            break
+        fi
+    done
+
+    if [[ -z "$bun_bin" ]]; then
+        if (( DRY_RUN )); then
+            status_dryrun "Install Bun runtime via official installer"
+        else
+            status_info "Installing Bun runtime..."
+            if curl -fsSL https://bun.sh/install | bash >/dev/null 2>&1; then
+                if [[ -x "$HOME/.bun/bin/bun" ]]; then
+                    bun_bin="$HOME/.bun/bin/bun"
+                    export PATH="$HOME/.bun/bin:$PATH"
+                    local bun_ver
+                    bun_ver="$("$bun_bin" --version 2>/dev/null || echo 'installed')"
+                    status_ok "Installed Bun: v$bun_ver at $bun_bin"
+                else
+                    status_ok "Installed Bun runtime"
+                fi
+            else
+                status_warn "Could not install Bun; skipping"
+            fi
+        fi
+    else
+        local bun_ver
+        bun_ver="$("$bun_bin" --version 2>/dev/null || echo 'installed')"
+        status_skip "Bun is already installed: v$bun_ver at $bun_bin"
+    fi
+}
+
+install_fnm_and_node
+install_bun
+
+# ------------------------------------------------------------
+# Step 4: Shell Environment & Plugins
+# ------------------------------------------------------------
+step_header "Step [4/5]: Shell Environment & Plugins"
 
 clone_or_skip() {
     local repo="$1"
@@ -258,9 +355,9 @@ if command -v zsh >/dev/null 2>&1; then
 fi
 
 # ------------------------------------------------------------
-# Step 4: Verification & Doctor
+# Step 5: Verification & Doctor
 # ------------------------------------------------------------
-step_header "Step [4/4]: Verification"
+step_header "Step [5/5]: Verification"
 
 if (( ! DRY_RUN )); then
     source "$DOTFILES_ROOT/linux/functions.sh"

@@ -60,7 +60,7 @@ try {
     # ------------------------------------------------------------
     # Step 1: PowerShell Profile Setup (Single-source Loader)
     # ------------------------------------------------------------
-    Write-StepHeader "Step [1/4]: Configuring PowerShell Profile"
+    Write-StepHeader "Step [1/6]: Configuring PowerShell Profile"
 
     $profileDir = Split-Path -Parent $ProfileTarget
     if (-not (Test-Path -LiteralPath $profileDir)) {
@@ -117,7 +117,7 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
     # ------------------------------------------------------------
     # Step 2: Shared Git Configuration
     # ------------------------------------------------------------
-    Write-StepHeader "Step [2/4]: Configuring Shared Git Settings"
+    Write-StepHeader "Step [2/6]: Configuring Shared Git Settings"
 
     if (Get-Command git.exe -ErrorAction SilentlyContinue) {
         # Git include.path
@@ -154,7 +154,7 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
     # ------------------------------------------------------------
     # Step 3: WSL Configuration Sync
     # ------------------------------------------------------------
-    Write-StepHeader "Step [3/4]: WSL Configuration"
+    Write-StepHeader "Step [3/6]: WSL Configuration"
 
     if (Test-Path -LiteralPath $WslConfigSource) {
         if (-not (Test-Path -LiteralPath $WslConfigTarget)) {
@@ -189,9 +189,121 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
     }
 
     # ------------------------------------------------------------
-    # Step 4: Verification & Doctor
+    # Step 4: Shared Tool Configurations (Micro, Fastfetch)
     # ------------------------------------------------------------
-    Write-StepHeader "Step [4/4]: Verification"
+    Write-StepHeader "Step [4/6]: Deploying Tool Configurations"
+
+    $microSource = Join-Path $DotfilesRoot 'shared\micro\settings.json'
+    $microTarget = Join-Path $HOME '.config\micro\settings.json'
+    if (Test-Path -LiteralPath $microSource) {
+        $microDir = Split-Path -Parent $microTarget
+        if (-not (Test-Path -LiteralPath $microDir)) {
+            if (-not $DryRun) { New-Item -ItemType Directory -Path $microDir -Force | Out-Null }
+        }
+        if (-not (Test-Path -LiteralPath $microTarget) -or $Force) {
+            if ($DryRun) {
+                Write-Status -Status 'DRY-RUN' -Message "Copy $microSource to $microTarget"
+            } else {
+                Copy-Item -LiteralPath $microSource -Destination $microTarget -Force
+                Write-Status -Status 'OK' -Message "Installed Micro editor settings: $microTarget"
+            }
+        } else {
+            Write-Status -Status 'SKIP' -Message "Micro settings already present: $microTarget"
+        }
+    }
+
+    $ffSource = Join-Path $DotfilesRoot 'shared\fastfetch\config.jsonc'
+    $ffTarget = Join-Path $HOME '.config\fastfetch\config.jsonc'
+    if (Test-Path -LiteralPath $ffSource) {
+        $ffDir = Split-Path -Parent $ffTarget
+        if (-not (Test-Path -LiteralPath $ffDir)) {
+            if (-not $DryRun) { New-Item -ItemType Directory -Path $ffDir -Force | Out-Null }
+        }
+        if (-not (Test-Path -LiteralPath $ffTarget) -or $Force) {
+            if ($DryRun) {
+                Write-Status -Status 'DRY-RUN' -Message "Copy $ffSource to $ffTarget"
+            } else {
+                Copy-Item -LiteralPath $ffSource -Destination $ffTarget -Force
+                Write-Status -Status 'OK' -Message "Installed Fastfetch config: $ffTarget"
+            }
+        } else {
+            Write-Status -Status 'SKIP' -Message "Fastfetch config already present: $ffTarget"
+        }
+    }
+
+    # ------------------------------------------------------------
+    # Step 5: Runtime Environments (Node.js via fnm & Bun)
+    # ------------------------------------------------------------
+    Write-StepHeader "Step [5/6]: Runtime Environments (Node.js & Bun)"
+
+    # Setup fnm and latest Node.js
+    $fnmCmd = Get-Command fnm.exe -ErrorAction SilentlyContinue
+    if (-not $fnmCmd) {
+        if ($DryRun) {
+            Write-Status -Status 'DRY-RUN' -Message "Install fnm (Fast Node Manager) via winget"
+        } else {
+            Write-Status -Status 'INFO' -Message "Installing fnm (Fast Node Manager)..."
+            if (Get-Command winget.exe -ErrorAction SilentlyContinue) {
+                & winget install --id Schniz.fnm --exact --source winget --accept-source-agreements --accept-package-agreements
+            } else {
+                Invoke-RestMethod https://fnm.vercel.app/install | Invoke-Expression
+            }
+            $fnmCmd = Get-Command fnm.exe -ErrorAction SilentlyContinue
+            if ($fnmCmd) {
+                Write-Status -Status 'OK' -Message "Installed fnm at: $($fnmCmd.Source)"
+            } else {
+                Write-Status -Status 'WARN' -Message "fnm installation could not be verified in current PATH"
+            }
+        }
+    } else {
+        Write-Status -Status 'SKIP' -Message "fnm is already present at: $($fnmCmd.Source)"
+    }
+
+    if ($fnmCmd) {
+        if ($DryRun) {
+            Write-Status -Status 'DRY-RUN' -Message "fnm install --latest; fnm default latest"
+        } else {
+            try {
+                Write-Status -Status 'INFO' -Message "Ensuring latest Node.js release via fnm..."
+                & $fnmCmd.Source install --latest 2>$null
+                & $fnmCmd.Source default latest 2>$null
+                & $fnmCmd.Source env --use-on-cd --shell powershell | Out-String | Invoke-Expression
+                $nodeVer = try { & node.exe -v 2>$null } catch { "installed" }
+                Write-Status -Status 'OK' -Message "Latest Node.js active: $nodeVer (managed via fnm)"
+            } catch {
+                Write-Status -Status 'WARN' -Message "Failed to ensure latest Node.js via fnm: $_"
+            }
+        }
+    }
+
+    # Setup Bun
+    $bunCmd = Get-Command bun.exe -ErrorAction SilentlyContinue
+    if (-not $bunCmd) {
+        if ($DryRun) {
+            Write-Status -Status 'DRY-RUN' -Message "Install Bun runtime via official installer"
+        } else {
+            Write-Status -Status 'INFO' -Message "Installing Bun runtime..."
+            try {
+                Invoke-RestMethod https://bun.sh/install.ps1 | Invoke-Expression
+                $bunCmd = Get-Command bun.exe -ErrorAction SilentlyContinue
+                if ($bunCmd) {
+                    Write-Status -Status 'OK' -Message "Installed Bun: $($bunCmd.Source)"
+                } else {
+                    Write-Status -Status 'OK' -Message "Installed Bun runtime"
+                }
+            } catch {
+                Write-Status -Status 'WARN' -Message "Could not install Bun automatically: $_"
+            }
+        }
+    } else {
+        $bunVer = try { & $bunCmd.Source --version 2>$null } catch { "installed" }
+        Write-Status -Status 'SKIP' -Message "Bun is already present: v$bunVer at $($bunCmd.Source)"
+    }
+
+    # ------------------------------------------------------------
+    # Step 6: Verification & Doctor
+    # ------------------------------------------------------------
+    Write-StepHeader "Step [6/6]: Verification"
 
     if (-not $DryRun) {
         $doctorScript = Join-Path $DotfilesRoot 'windows\functions.ps1'

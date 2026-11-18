@@ -54,6 +54,9 @@ $commandMap = @{
     'cURL.cURL'               = 'curl.exe'
     'GNU.Wget2'               = 'wget2.exe'
     'eza-community.eza'       = 'eza.exe'
+    'Fastfetch-cli.Fastfetch' = 'fastfetch.exe'
+    'Oven-sh.Bun'             = 'bun.exe'
+    'Schniz.fnm'              = 'fnm.exe'
 }
 
 $packageFile = Join-Path $PSScriptRoot '..\packages\winget.txt'

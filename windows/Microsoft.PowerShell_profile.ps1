@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # PowerShell Profile — main entry point
 # Loads everything from ~\dotfiles\windows\ in order.
 # ============================================================
@@ -39,3 +39,9 @@ if ($global:IsInteractiveShell) {
 
 # ---- Prompt / Starship ----
 . "$scriptPath\prompt.ps1"
+
+# ---- Local Machine Overrides ----
+$localProfile = Join-Path $HOME ".profile.local.ps1"
+if (Test-Path -LiteralPath $localProfile) {
+    . $localProfile
+}

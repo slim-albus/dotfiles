@@ -80,7 +80,7 @@
                 "weight": "extra-bold"
             },
             "intenseTextStyle": "all",
-            "opacity": 20,
+            "opacity": 90,
             "padding": "20",
             "useAcrylic": true
         },
@@ -131,25 +131,13 @@
             {
                 "guid": "{2aea4a58-e18a-536e-9200-77edf94cd8cc}",
                 "hidden": false,
-                "name": "Developer Command Prompt for VS 18",
+                "name": "Developer Command Prompt for VS",
                 "source": "Windows.Terminal.VisualStudio"
             },
             {
                 "guid": "{9c4adabf-393c-51ca-83d2-8ec77c24096b}",
                 "hidden": false,
-                "name": "Developer PowerShell for VS 18",
-                "source": "Windows.Terminal.VisualStudio"
-            },
-            {
-                "guid": "{1c5b2b3e-846a-5a22-b1c8-e9556bce9607}",
-                "hidden": false,
-                "name": "Developer Command Prompt for VS 18",
-                "source": "Windows.Terminal.VisualStudio"
-            },
-            {
-                "guid": "{7c78ac06-4737-5891-ba04-086250d1e188}",
-                "hidden": false,
-                "name": "Developer PowerShell for VS 18",
+                "name": "Developer PowerShell for VS",
                 "source": "Windows.Terminal.VisualStudio"
             },
             {
@@ -175,9 +163,9 @@
             "brightRed": "#E74856",
             "brightWhite": "#F2F2F2",
             "brightYellow": "#F9F1A5",
-            "cursorColor": "#FFFFFF",
+            "cursorColor": "#0C0C0C",
             "cyan": "#3A96DD",
-            "foreground": "#FFFFFF",
+            "foreground": "#0C0C0C",
             "green": "#13A10E",
             "name": "Color Scheme 14",
             "purple": "#881798",
