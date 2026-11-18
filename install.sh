@@ -253,6 +253,7 @@ install_bun() {
             fi
         fi
     else
+        export PATH="$HOME/.bun/bin:$PATH"
         local bun_ver
         bun_ver="$("$bun_bin" --version 2>/dev/null || echo 'installed')"
         status_skip "Bun is already installed: v$bun_ver at $bun_bin"
@@ -360,6 +361,7 @@ fi
 step_header "Step [5/5]: Verification"
 
 if (( ! DRY_RUN )); then
+    source "$DOTFILES_ROOT/linux/env.sh"
     source "$DOTFILES_ROOT/linux/functions.sh"
     doctor || true
 else
