@@ -147,6 +147,42 @@ skipped_count=0
 failed_count=0
 failed_packages=()
 
+# Pre-configure NodeSource repository if nodejs is in manifest
+has_nodejs=0
+for p in "${requested_packages[@]}"; do
+    if [[ "$p" == "nodejs" ]]; then
+        has_nodejs=1
+        break
+    fi
+done
+
+if (( has_nodejs )); then
+    nodesource_needed=0
+    if [[ "$package_manager" == dnf ]]; then
+        if ! compgen -G "/etc/yum.repos.d/nodesource*.repo" >/dev/null 2>&1; then
+            nodesource_needed=1
+        fi
+    elif [[ "$package_manager" == apt ]]; then
+        if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
+            nodesource_needed=1
+        fi
+    fi
+
+    if (( nodesource_needed )); then
+        if (( DRY_RUN )); then
+            status_dryrun "Configure NodeSource Current repository (setup_current.x)"
+        else
+            status_info "Configuring NodeSource Current repository for latest Node.js..."
+            if [[ "$package_manager" == dnf ]]; then
+                curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash - >/dev/null 2>&1 || true
+            elif [[ "$package_manager" == apt ]]; then
+                curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash - >/dev/null 2>&1 || true
+            fi
+            status_ok "NodeSource Current repository configured"
+        fi
+    fi
+fi
+
 # Pre-refresh apt cache if not dry-run
 if (( ! DRY_RUN )) && [[ "$package_manager" == apt ]]; then
     printf "\n  ${c_cyan}Updating apt package index...${c_reset}\n"

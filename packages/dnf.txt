@@ -26,3 +26,5 @@ p7zip-plugins
 unrar
 zstd
 fastfetch
+libatomic
+nodejs

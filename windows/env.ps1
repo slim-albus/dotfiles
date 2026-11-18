@@ -13,8 +13,8 @@ $env:STARSHIP_CONFIG = Join-Path $dotfilesRoot "shared\starship.toml"
 # ---- Fast PATH Prepending ----
 $pathEntries = @(
     "$HOME\.bun\bin",
-    "$HOME\.fnm",
-    "$env:APPDATA\fnm",
+    "$env:ProgramFiles\nodejs",
+    "$env:APPDATA\npm",
     "$HOME\.local\bin",
     "$HOME\.cargo\bin",
     "$HOME\go\bin",
@@ -96,12 +96,4 @@ if ($direnvBin) {
     if (Test-Path -LiteralPath $direnvCache) {
         . $direnvCache
     }
-}
-
-# Fnm (Fast Node Manager) initialization
-$fnmBin = Get-Command fnm.exe -ErrorAction SilentlyContinue
-if ($fnmBin) {
-    try {
-        & $fnmBin.Source env --use-on-cd --shell powershell | Out-String | Invoke-Expression
-    } catch {}
 }

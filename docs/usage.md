@@ -36,9 +36,10 @@ The installer verifies `git` and `bash`, then links shared configuration files i
 - `micro/settings.json`
 
 Existing target files are backed up to `.dotfiles-backup.<timestamp>` before being replaced.
-It automatically provisions **Fast Node Manager (`fnm`)** with the latest Current Node.js release
-and **Bun** in user space (no root or sudo required), configures `~/.bashrc` and `~/.zshrc`,
-provisions Oh My Zsh with plugins when Zsh and Git are available, and runs an automated doctor check.
+It automatically provisions **latest Node.js** (via official NodeSource Current repository on Linux,
+and `OpenJS.NodeJS.Current` on Windows) and the **Bun** runtime (no node version managers required),
+configures `~/.bashrc` and `~/.zshrc`, provisions Oh My Zsh with plugins when Zsh and Git are available,
+and runs an automated doctor check.
 
 ### Windows PowerShell
 

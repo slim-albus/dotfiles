@@ -232,48 +232,39 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
     }
 
     # ------------------------------------------------------------
-    # Step 5: Runtime Environments (Node.js via fnm & Bun)
+    # Step 5: Runtime Environments (Node.js & Bun)
     # ------------------------------------------------------------
     Write-StepHeader "Step [5/6]: Runtime Environments (Node.js & Bun)"
 
-    # Setup fnm and latest Node.js
-    $fnmCmd = Get-Command fnm.exe -ErrorAction SilentlyContinue
-    if (-not $fnmCmd) {
+    # Setup Node.js (Current)
+    $nodeCmd = Get-Command node.exe -ErrorAction SilentlyContinue
+    if (-not $nodeCmd -and (Test-Path -LiteralPath "$env:ProgramFiles\nodejs\node.exe")) {
+        $nodeCmd = Get-Item -LiteralPath "$env:ProgramFiles\nodejs\node.exe"
+    }
+
+    if (-not $nodeCmd) {
         if ($DryRun) {
-            Write-Status -Status 'DRY-RUN' -Message "Install fnm (Fast Node Manager) via winget"
+            Write-Status -Status 'DRY-RUN' -Message "Install Node.js (Current) via winget"
         } else {
-            Write-Status -Status 'INFO' -Message "Installing fnm (Fast Node Manager)..."
+            Write-Status -Status 'INFO' -Message "Installing Node.js (Current)..."
             if (Get-Command winget.exe -ErrorAction SilentlyContinue) {
-                & winget install --id Schniz.fnm --exact --source winget --accept-source-agreements --accept-package-agreements
-            } else {
-                Invoke-RestMethod https://fnm.vercel.app/install | Invoke-Expression
+                & winget install --id OpenJS.NodeJS.Current --exact --source winget --accept-source-agreements --accept-package-agreements
             }
-            $fnmCmd = Get-Command fnm.exe -ErrorAction SilentlyContinue
-            if ($fnmCmd) {
-                Write-Status -Status 'OK' -Message "Installed fnm at: $($fnmCmd.Source)"
+            $nodeCmd = Get-Command node.exe -ErrorAction SilentlyContinue
+            if (-not $nodeCmd -and (Test-Path -LiteralPath "$env:ProgramFiles\nodejs\node.exe")) {
+                $nodeCmd = Get-Item -LiteralPath "$env:ProgramFiles\nodejs\node.exe"
+            }
+            if ($nodeCmd) {
+                $nodePath = if ($nodeCmd.Source) { $nodeCmd.Source } else { $nodeCmd.FullName }
+                Write-Status -Status 'OK' -Message "Installed Node.js at: $nodePath"
             } else {
-                Write-Status -Status 'WARN' -Message "fnm installation could not be verified in current PATH"
+                Write-Status -Status 'WARN' -Message "Node.js installation completed; restart shell to update PATH"
             }
         }
     } else {
-        Write-Status -Status 'SKIP' -Message "fnm is already present at: $($fnmCmd.Source)"
-    }
-
-    if ($fnmCmd) {
-        if ($DryRun) {
-            Write-Status -Status 'DRY-RUN' -Message "fnm install --latest; fnm default latest"
-        } else {
-            try {
-                Write-Status -Status 'INFO' -Message "Ensuring latest Node.js release via fnm..."
-                & $fnmCmd.Source install --latest 2>$null
-                & $fnmCmd.Source default latest 2>$null
-                & $fnmCmd.Source env --use-on-cd --shell powershell | Out-String | Invoke-Expression
-                $nodeVer = try { & node.exe -v 2>$null } catch { "installed" }
-                Write-Status -Status 'OK' -Message "Latest Node.js active: $nodeVer (managed via fnm)"
-            } catch {
-                Write-Status -Status 'WARN' -Message "Failed to ensure latest Node.js via fnm: $_"
-            }
-        }
+        $nodePath = if ($nodeCmd.Source) { $nodeCmd.Source } else { $nodeCmd.FullName }
+        $nodeVer = try { & node.exe -v 2>$null } catch { "installed" }
+        Write-Status -Status 'SKIP' -Message "Node.js is already present: $nodeVer at $nodePath"
     }
 
     # Setup Bun

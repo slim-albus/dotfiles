@@ -25,3 +25,5 @@ p7zip-full
 unrar
 zstd
 fastfetch
+libatomic1
+nodejs

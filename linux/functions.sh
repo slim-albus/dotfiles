@@ -315,7 +315,7 @@ doctor() {
     printf '  Source Directory : %s\n' "$root"
 
     printf '\n  Installed Tools:\n'
-    local tools=(git bash zsh node bun fnm starship zoxide micro fastfetch)
+    local tools=(git bash zsh node npm bun starship zoxide micro fastfetch)
     local bin_path=""
     for tool in "${tools[@]}"; do
         if command -v "$tool" >/dev/null 2>&1; then

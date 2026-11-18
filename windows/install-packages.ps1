@@ -56,7 +56,7 @@ $commandMap = @{
     'eza-community.eza'       = 'eza.exe'
     'Fastfetch-cli.Fastfetch' = 'fastfetch.exe'
     'Oven-sh.Bun'             = 'bun.exe'
-    'Schniz.fnm'              = 'fnm.exe'
+    'OpenJS.NodeJS.Current'   = 'node.exe'
 }
 
 $packageFile = Join-Path $PSScriptRoot '..\packages\winget.txt'

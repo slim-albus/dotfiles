@@ -369,7 +369,7 @@ function Invoke-DotfilesDoctor {
     Write-Host "`n  Dotfiles Health Check" -ForegroundColor Cyan
     Write-Host ("  " + ("=" * 50)) -ForegroundColor DarkGray
 
-    $tools = @('git', 'pwsh', 'node', 'bun', 'fnm', 'starship', 'zoxide', 'micro', 'fastfetch', 'winget')
+    $tools = @('git', 'pwsh', 'node', 'npm', 'bun', 'starship', 'zoxide', 'micro', 'fastfetch', 'winget')
     foreach ($tool in $tools) {
         $cmd = Get-Command "$tool.exe" -ErrorAction SilentlyContinue
         if ($cmd) {

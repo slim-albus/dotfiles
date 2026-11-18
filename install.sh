@@ -166,60 +166,60 @@ link_config_file "$DOTFILES_ROOT/shared/micro/settings.json" "$config_dir/micro/
 link_config_file "$DOTFILES_ROOT/shared/inputrc" "$HOME/.inputrc" "Readline Config"
 
 # ------------------------------------------------------------
-# Step 3: Runtime Environments (Node.js via fnm & Bun)
+# Step 3: Runtime Environments (Node.js & Bun)
 # ------------------------------------------------------------
 step_header "Step [3/5]: Runtime Environments (Node.js & Bun)"
 
-# Setup latest Node.js via fnm (Fast Node Manager)
-install_fnm_and_node() {
-    local fnm_bin=""
-    for candidate in "$(command -v fnm 2>/dev/null)" "$HOME/.local/share/fnm/fnm" "$HOME/.fnm/fnm"; do
-        if [[ -n "$candidate" && -x "$candidate" ]]; then
-            fnm_bin="$candidate"
-            break
-        fi
-    done
+# Setup latest Node.js via NodeSource Current repository
+install_nodejs() {
+    local node_bin=""
+    node_bin="$(command -v node 2>/dev/null || true)"
 
-    if [[ -z "$fnm_bin" ]]; then
-        if (( DRY_RUN )); then
-            status_dryrun "Install fnm (Fast Node Manager) via official installer"
-        else
-            status_info "Installing fnm (Fast Node Manager)..."
-            if curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell >/dev/null 2>&1; then
-                for candidate in "$HOME/.local/share/fnm/fnm" "$HOME/.fnm/fnm"; do
-                    if [[ -x "$candidate" ]]; then
-                        fnm_bin="$candidate"
-                        break
-                    fi
-                done
-                status_ok "Installed fnm to $fnm_bin"
-            else
-                status_warn "Could not install fnm; skipping Node.js auto-setup"
-                return 0
-            fi
-        fi
-    else
-        status_skip "fnm is already installed at: $fnm_bin"
+    if [[ -n "$node_bin" ]]; then
+        local node_ver
+        node_ver="$("$node_bin" -v 2>/dev/null || echo 'installed')"
+        status_skip "Node.js is already installed: $node_ver at $node_bin"
+        return 0
     fi
 
-    if [[ -n "$fnm_bin" && -x "$fnm_bin" ]]; then
-        export PATH="$(dirname "$fnm_bin"):$PATH"
-        eval "$("$fnm_bin" env --shell bash 2>/dev/null || true)"
+    if (( DRY_RUN )); then
+        status_dryrun "Configure NodeSource repository and install latest Node.js"
+        return 0
+    fi
 
-        if (( DRY_RUN )); then
-            status_dryrun "fnm install --latest && fnm default latest"
-        else
-            status_info "Ensuring latest Node.js release via fnm..."
-            if "$fnm_bin" install --latest >/dev/null 2>&1; then
-                "$fnm_bin" default latest >/dev/null 2>&1 || true
-                eval "$("$fnm_bin" env --shell bash 2>/dev/null || true)"
-                local node_ver
-                node_ver="$(node -v 2>/dev/null || echo 'installed')"
-                status_ok "Latest Node.js active: $node_ver (managed via fnm)"
-            else
-                status_warn "fnm install --latest failed; skipping Node.js setup"
-            fi
+    local package_manager=""
+    if command -v dnf >/dev/null 2>&1; then
+        package_manager=dnf
+    elif command -v apt-get >/dev/null 2>&1; then
+        package_manager=apt
+    fi
+
+    if [[ -z "$package_manager" ]]; then
+        status_warn "No supported package manager found (expected apt or dnf); skipping Node.js auto-setup"
+        return 0
+    fi
+
+    status_info "Setting up NodeSource Current repository for latest Node.js..."
+    if [[ "$package_manager" == dnf ]]; then
+        if ! compgen -G "/etc/yum.repos.d/nodesource*.repo" >/dev/null 2>&1; then
+            curl -fsSL https://rpm.nodesource.com/setup_current.x | sudo bash - >/dev/null 2>&1 || true
         fi
+        sudo dnf install -y libatomic nodejs >/dev/null 2>&1 || true
+    elif [[ "$package_manager" == apt ]]; then
+        if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
+            curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash - >/dev/null 2>&1 || true
+        fi
+        sudo apt-get update -qq || true
+        sudo apt-get install -y libatomic1 nodejs >/dev/null 2>&1 || true
+    fi
+
+    node_bin="$(command -v node 2>/dev/null || true)"
+    if [[ -n "$node_bin" ]]; then
+        local node_ver
+        node_ver="$("$node_bin" -v 2>/dev/null || echo 'installed')"
+        status_ok "Latest Node.js installed: $node_ver at $node_bin"
+    else
+        status_warn "Could not verify Node.js installation in PATH"
     fi
 }
 
@@ -259,7 +259,7 @@ install_bun() {
     fi
 }
 
-install_fnm_and_node
+install_nodejs
 install_bun
 
 # ------------------------------------------------------------
