@@ -189,7 +189,7 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
     }
 
     # ------------------------------------------------------------
-    # Step 4: Shared Tool Configurations (Micro, Fastfetch)
+    # Step 4: Shared Tool Configurations (Micro)
     # ------------------------------------------------------------
     Write-StepHeader "Step [4/6]: Deploying Tool Configurations"
 
@@ -209,25 +209,6 @@ if (Test-Path -LiteralPath `$DotfilesProfile) {
             }
         } else {
             Write-Status -Status 'SKIP' -Message "Micro settings already present: $microTarget"
-        }
-    }
-
-    $ffSource = Join-Path $DotfilesRoot 'shared\fastfetch\config.jsonc'
-    $ffTarget = Join-Path $HOME '.config\fastfetch\config.jsonc'
-    if (Test-Path -LiteralPath $ffSource) {
-        $ffDir = Split-Path -Parent $ffTarget
-        if (-not (Test-Path -LiteralPath $ffDir)) {
-            if (-not $DryRun) { New-Item -ItemType Directory -Path $ffDir -Force | Out-Null }
-        }
-        if (-not (Test-Path -LiteralPath $ffTarget) -or $Force) {
-            if ($DryRun) {
-                Write-Status -Status 'DRY-RUN' -Message "Copy $ffSource to $ffTarget"
-            } else {
-                Copy-Item -LiteralPath $ffSource -Destination $ffTarget -Force
-                Write-Status -Status 'OK' -Message "Installed Fastfetch config: $ffTarget"
-            }
-        } else {
-            Write-Status -Status 'SKIP' -Message "Fastfetch config already present: $ffTarget"
         }
     }
 

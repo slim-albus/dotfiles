@@ -161,7 +161,6 @@ link_config_file "$DOTFILES_ROOT/shared/starship.toml" "$config_dir/starship.tom
 link_config_file "$DOTFILES_ROOT/shared/git/config" "$config_dir/git/config" "Git Config"
 link_config_file "$DOTFILES_ROOT/shared/git/ignore" "$config_dir/git/ignore" "Git Global Ignore"
 link_config_file "$DOTFILES_ROOT/shared/tmux/tmux.conf" "$config_dir/tmux/tmux.conf" "tmux Config"
-link_config_file "$DOTFILES_ROOT/shared/fastfetch/config.jsonc" "$config_dir/fastfetch/config.jsonc" "Fastfetch Config"
 link_config_file "$DOTFILES_ROOT/shared/micro/settings.json" "$config_dir/micro/settings.json" "Micro Editor Config"
 link_config_file "$DOTFILES_ROOT/shared/inputrc" "$HOME/.inputrc" "Readline Config"
 

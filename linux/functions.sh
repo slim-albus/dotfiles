@@ -127,13 +127,8 @@ y() {
 }
 
 sysinfo() {
-    local ff_config="${DOTFILES_ROOT:-$HOME/dotfiles}/shared/fastfetch/config.jsonc"
     if command -v fastfetch >/dev/null 2>&1; then
-        if [[ -r "$ff_config" ]]; then
-            fastfetch -c "$ff_config"
-        else
-            fastfetch
-        fi
+        fastfetch
     else
         printf 'OS: '; uname -srm
         printf 'Host: '; hostname
@@ -332,7 +327,6 @@ doctor() {
         "git/config:$config_dir/git/config:$root/shared/git/config"
         "git/ignore:$config_dir/git/ignore:$root/shared/git/ignore"
         "tmux.conf:$config_dir/tmux/tmux.conf:$root/shared/tmux/tmux.conf"
-        "fastfetch:$config_dir/fastfetch/config.jsonc:$root/shared/fastfetch/config.jsonc"
         "micro:$config_dir/micro/settings.json:$root/shared/micro/settings.json"
         "inputrc:$HOME/.inputrc:$root/shared/inputrc"
     )

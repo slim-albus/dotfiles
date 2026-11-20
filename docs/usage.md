@@ -32,7 +32,6 @@ The installer verifies `git` and `bash`, then links shared configuration files i
 - `git/config`
 - `git/ignore`
 - `tmux/tmux.conf`
-- `fastfetch/config.jsonc`
 - `micro/settings.json`
 
 Existing target files are backed up to `.dotfiles-backup.<timestamp>` before being replaced.

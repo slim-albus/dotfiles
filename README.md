@@ -39,6 +39,6 @@ in the full reference.
 - `linux/`: Bash and Zsh startup modules
 - `windows/`: PowerShell modules, `dots` manual, and visual installers
 - `wsl/`: WSL system configuration (`.wslconfig`)
-- `shared/`: Starship, Fastfetch, Git, Micro, and tmux configuration
+- `shared/`: Starship, Git, Micro, and tmux configuration
 - `packages/`: apt, dnf, and Winget package lists
 - `.editorconfig` and `.gitattributes`: repository-wide file standards
